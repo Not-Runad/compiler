@@ -5,24 +5,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-// =================================================================
-// prototype declaration
-// =================================================================
-void error(char *fmt, ...);
-bool consume(char op);
-void expect(char op);
-int expect_number();
-bool at_eof();
-Token *new_token(TokenKind kind, Token *cur, char *str);
-Token *tokenize(char *p);
-void error_at(char *loc, char *fmt, ...);
-Node *new_node(NodeKind kind, Node *lhs, Node *rhs);
-Node *new_node_num(int val);
-Node *expr();
-Node *mul();
-Node *primary();
-void gen(Node *node);
-
 // ================================================================
 // token
 // ================================================================
@@ -37,15 +19,18 @@ typedef enum
 typedef struct Token Token;
 
 // token type
-struct Token
+typedef struct Token
 {
     TokenKind kind; // token type
     Token *next; // next input token
     int val; // the number of TK_NUM (if 'kind' is 'TK_NUM')
     char *str; // token string
-};
+} Token;
 
-// highlighting token
+// input program
+char *user_input;
+
+// current token
 Token *token;
 
 // function of reporting error
@@ -59,11 +44,27 @@ void error(char *fmt, ...)
     exit(1);
 }
 
+// report error place
+void error_at(char *loc, char *fmt, ...)
+{
+    va_list ap;
+    va_start(ap, fmt);
+
+    int pos = loc - user_input;
+    fprintf(stderr, "%s\n", user_input);
+    fprintf(stderr, "%*s", pos, "");
+    fprintf(stderr, "^ ");
+    vfprintf(stderr, fmt, ap);
+    fprintf(stderr, "\n");
+    exit(1);
+}
+
 // if next token is the expected symbol, it reads one token and return true.
 // otherwise, it returns false.
 bool consume(char op)
 {
-    if (token->kind != TK_RESERVED || token->str[0] != op) return false;
+    if (token->kind != TK_RESERVED || token->str[0] != op)
+        return false;
     token = token->next;
     return true;
 }
@@ -73,7 +74,7 @@ bool consume(char op)
 void expect(char op)
 {
     if (token->kind != TK_RESERVED || token->str[0] != op)
-        error("'%c' is wrong.", op);
+        error_at(token->str, "expeted '%c'", op);
     token = token->next;
 }
 
@@ -83,7 +84,7 @@ void expect(char op)
 int expect_number()
 {
     if (token->kind != TK_NUM)
-        error("it is not number.");
+        error_at(token->str, "expeted a number");
     int val = token->val;
     token = token->next;
     return val;
@@ -104,8 +105,9 @@ Token *new_token(TokenKind kind, Token *cur, char *str)
     return tok;
 }
 
-Token *tokenize(char *p)
+Token *tokenize()
 {
+    char *p = user_input;
     Token head;
     head.next = NULL;
     Token *cur = &head;
@@ -118,7 +120,7 @@ Token *tokenize(char *p)
             continue;
         }
 
-        if (*p == '+' || *p == '-')
+        if (strchr("+-*/()", *p))
         {
             cur = new_token(TK_RESERVED, cur, p++);
             continue;
@@ -131,32 +133,11 @@ Token *tokenize(char *p)
             continue;
         }
 
-        error("Could not tokenize.");
+        error("invalid token");
     }
 
     new_token(TK_EOF, cur, p);
     return head.next;
-}
-
-// ================================================================
-// input program
-// ================================================================
-
-char *user_input;
-
-// report error place
-void error_at(char *loc, char *fmt, ...)
-{
-    va_list ap;
-    va_start(ap, fmt);
-
-    int pos = loc - user_input;
-    fprintf(stderr, "%s\n", user_input);
-    fprintf(stderr, "%*s", pos, " ");
-    fprintf(stderr, "^ ");
-    vfprintf(stderr, fmt, ap);
-    fprintf(stderr, "\n");
-    exit(1);
 }
 
 typedef enum
@@ -168,13 +149,15 @@ typedef enum
     ND_NUM,
 } NodeKind;
 
-typedef struct Node
+typedef struct Node Node;
+
+struct Node
 {
     NodeKind kind;
     Node *lhs;
     Node *rhs;
     int val;
-} Node;
+};
 
 Node *new_node(NodeKind kind, Node *lhs, Node *rhs)
 {
@@ -192,6 +175,10 @@ Node *new_node_num(int val)
     node->val = val;
     return node;
 }
+
+Node *expr();
+Node *mul();
+Node *primary();
 
 Node *expr()
 {
@@ -248,19 +235,19 @@ void gen(Node *node)
 
     switch (node->kind)
     {
-    case ND_ADD:
-        printf("    add rax, rdi\n");
-        break;
-    case ND_SUB:
-        printf("    sub rax, rdi\n");
-        break;
-    case ND_MUL:
-        printf("    imul rax, rdi\n");
-        break;
-    case ND_DIV:
-        printf("    cqo\n");
-        printf("    idiv rdi\n");
-        break;
+        case ND_ADD:
+            printf("    add rax, rdi\n");
+            break;
+        case ND_SUB:
+            printf("    sub rax, rdi\n");
+            break;
+        case ND_MUL:
+            printf("    imul rax, rdi\n");
+            break;
+        case ND_DIV:
+            printf("    cqo\n");
+            printf("    idiv rdi\n");
+            break;
     }
     
     printf("    push rax\n");
@@ -274,13 +261,13 @@ int main(int argc, char **argv)
 {
     if (argc != 2)
     {
-        fprintf(stderr, "Incorrect number of arguments.\n");
+        fprintf(stderr, "%s: invalid number of arguments.\n", argv[0]);
         return 1;
     }
 
     // tokenize and parse
     user_input = argv[1];
-    token = tokenize(user_input);
+    token = tokenize();
     Node *node = expr();
 
     // print assembly's first half
