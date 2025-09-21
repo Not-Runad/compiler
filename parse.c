@@ -23,14 +23,24 @@ void error_at(char *loc, char *fmt, ...)
     exit(1);
 }
 
-bool consume(char *op)
+Token *consume(char *op)
 {
     if (token->kind != TK_RESERVED ||
         strlen(op) != token->len ||
         memcmp(token->str, op, token->len))
         return false;
+    Token *tok = token;
     token = token->next;
-    return true;
+    return tok;
+}
+
+Token *consume_ident()
+{
+    if (token->kind != TK_IDENT)
+        return false;
+    Token *tok = token;
+    token = token->next;
+    return tok;
 }
 
 void expect(char *op)
@@ -111,6 +121,13 @@ Token *tokenize()
             continue;
         }
 
+        if ('a' <= *p && *p <= 'z')
+        {
+            cur = new_token(TK_IDENT, cur, p++, 0);
+            cur->len = 1;
+            continue;
+        }
+
         error("invalid token");
     }
 
@@ -135,9 +152,32 @@ Node *new_num(int val)
     return node;
 }
 
+void program()
+{
+    int i = 0;
+    while (!at_eof())
+        code[i++] = stmt();
+    code[i] = NULL;
+}
+
+Node *stmt()
+{
+    Node *node = expr();
+    expect(";");
+    return node;
+}
+
 Node *expr()
 {
-    return equality();
+    return assign();
+}
+
+Node *assign()
+{
+    Node *node = equality();
+    if (consume('='))
+        new_node(ND_ASSIGN, node, assign());
+    return node;
 }
 
 Node *equality()
@@ -217,5 +257,15 @@ Node *primary()
         expect(")");
         return node;
     }
+
+    Token *tok = consume_ident();
+    if (tok)
+    {
+        Node *node = calloc(1, sizeof(Node));
+        node->kind = ND_LVAR;
+        node->offset = (tok->str[0] - 'a' + 1) * 8;
+        return node;
+    }
+    
     return new_num(expect_number());
 }

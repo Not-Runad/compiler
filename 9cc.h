@@ -5,13 +5,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-// ================================================================
-// token
-// ================================================================
 // kind of token
 typedef enum
 {
     TK_RESERVED, // symbol
+    TK_IDENT, // identifier
     TK_NUM, // integer token
     TK_EOF, // end of input token
 } TokenKind;
@@ -32,6 +30,8 @@ char *user_input;
 
 // current token
 Token *token;
+
+Node *code[100];
 
 // function of reporting error
 // get same args as printf
@@ -72,6 +72,8 @@ typedef enum
     ND_NE, // !=
     ND_LT, // <
     ND_LE, // <=
+    ND_ASSIGN, // =
+    ND_LVAR, // local variable
     ND_NUM, // Integer
 } NodeKind;
 
@@ -81,21 +83,36 @@ struct Node
     NodeKind kind;
     Node *lhs;
     Node *rhs;
-    int val;
+    int val; // only used if kind == ND_NUM
+    int offset; // only used if kind == ND_LVAR
 };
 
 Node *new_node(NodeKind kind, Node *lhs, Node *rhs);
 
 Node *new_num(int val);
 
-Node *expr(); // expr = equality
-Node *equality(); // equality = relational ("==" relational | "!=" relational)*
-Node *relational(); // relational = add ("<" add | "<=" add | ">" add | ">=" add)*
-Node *add(); // add = mul ("+" mul | "-" mul)*
-Node *mul(); // mul = unary ("*" unary | "/" unary)*
-Node *unary(); // unary = ("+" | "-")? primary
-Node *primary(); // primary = num | "(" expr ")"
+// = stmt*
+void program();
+// = expr ";"
+Node *stmt();
+// = assign
+Node *expr();
+// = equality ("=" assign)?
+Node *assign();
+// = relational ("==" relational | "!=" relational)*
+Node *equality();
+// = add ("<" add | "<=" add | ">" add | ">=" add)*
+Node *relational();
+// = mul ("+" mul | "-" mul)*
+Node *add();
+// = unary ("*" unary | "/" unary)*
+Node *mul();
+// = ("+" | "-")? primary
+Node *unary();
+// = num | ident | "(" expr ")"
+Node *primary();
 
+void gen_lval(Node *node);
 void gen(Node *node);
 
 int main(int argc, char **argv);
