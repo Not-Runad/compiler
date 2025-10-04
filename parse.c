@@ -71,6 +71,19 @@ bool at_eof()
     return token->kind == TK_EOF;
 }
 
+bool startwith(char *p, char *q)
+{
+    return memcmp(p, q, strlen(q)) == 0;
+}
+
+int is_alnum(char c)
+{
+    return ('a' <= c && c <= 'z')
+        || ('A' <= c && c <= 'Z')
+        || ('0' <= c && c <= '9')
+        || c == '_';
+}
+
 Token *new_token(TokenKind kind, Token *cur, char *str, int len)
 {
     Token *tok = calloc(1, sizeof(Token));
@@ -79,11 +92,6 @@ Token *new_token(TokenKind kind, Token *cur, char *str, int len)
     tok->len = len;
     cur->next = tok;
     return tok;
-}
-
-bool startwith(char *p, char *q)
-{
-    return memcmp(p, q, strlen(q)) == 0;
 }
 
 Token *tokenize()
@@ -97,7 +105,7 @@ Token *tokenize()
     {
         if (isspace(*p))
         {
-            p++;
+            p += 1;
             continue;
         }
 
@@ -113,7 +121,8 @@ Token *tokenize()
 
         if (strchr("+-*/()<>", *p))
         {
-            cur = new_token(TK_RESERVED, cur, p++, 1);
+            cur = new_token(TK_RESERVED, cur, p, 1);
+            p += 1;
             continue;
         }
 
@@ -123,13 +132,22 @@ Token *tokenize()
             char *q = p;
             cur->val = strtol(p, &p, 10);
             cur->len = p - q;
+            p += p - q;
             continue;
         }
 
         if ('a' <= *p && *p <= 'z')
         {
-            cur = new_token(TK_IDENT, cur, p++, 0);
+            cur = new_token(TK_IDENT, cur, p, 0);
             cur->len = 1;
+            p += 1;
+            continue;
+        }
+
+        if (strncmp(p, "return", 6) == 0 && !is_alnum(p[6]))
+        {
+            cur = new_token(TK_RETURN, cur, p, 6);
+            p += 6;
             continue;
         }
 
@@ -167,7 +185,17 @@ void program()
 
 Node *stmt()
 {
-    Node *node = expr();
+    Node *node;
+    if (consume("return"))
+    {
+        node->kind = ND_RETURN;
+        node->lhs = expr();
+    }
+    else
+    {
+        node = expr();
+    }
+    
     expect(";");
     return node;
 }

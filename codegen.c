@@ -19,6 +19,7 @@ void gen(Node *node)
         return;
     case ND_LVAR:
         gen_lval(node);
+
         printf("    pop rax\n");
         printf("    mov rax, [rax]\n");
         printf("    push rax\n");
@@ -31,6 +32,14 @@ void gen(Node *node)
         printf("    pop rax\n");
         printf("    mov [rax], rdi\n");
         printf("    push rdi\n");
+        return;
+    case ND_RETURN:
+        gen(node->lhs);
+
+        printf("    pop rax\n");
+        printf("    mov rsp, rbp\n");
+        printf("    pop rbp\n");
+        printf("    ret\n");
         return;
     }
 

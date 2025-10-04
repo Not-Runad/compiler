@@ -9,8 +9,9 @@ typedef enum
 {
     TK_RESERVED, // symbol
     TK_IDENT, // identifier
-    TK_NUM, // integer token
-    TK_EOF, // end of input token
+    TK_NUM, // integer
+    TK_EOF, // end of input
+    TK_RETURN, // return
 } TokenKind;
 
 // token type
@@ -30,6 +31,7 @@ Token *consume(char *op);
 void expect(char *op);
 int expect_number();
 bool at_eof();
+int is_alnum(char c);
 bool startwith(char *p, char *q);
 Token *new_token(TokenKind kind, Token *cur, char *str, int len);
 Token *tokenize();
@@ -47,6 +49,7 @@ typedef enum
     ND_ASSIGN, // =
     ND_LVAR, // local variable
     ND_NUM, // Integer
+    ND_RETURN, // return
 } NodeKind;
 
 typedef struct Node Node;
