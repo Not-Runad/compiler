@@ -33,7 +33,7 @@ int main(int argc, char **argv)
     // result value may be left at stack-top.
     // load it to RAX as return value from function.
     printf("    mov rsp, rbp\n");
-    printf("    pop rax\n");
+    printf("    pop rbp\n");
     printf("    ret\n");
     return 0;
 }

@@ -5,7 +5,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-// kind of token
 typedef enum
 {
     TK_RESERVED, // symbol
@@ -25,41 +24,14 @@ struct Token
     int len; // token length
 };
 
-// input program
-char *user_input;
-
-// current token
-Token *token;
-
-Node *code[100];
-
-// function of reporting error
-// get same args as printf
 void error(char *fmt, ...);
-
-// report error place
 void error_at(char *loc, char *fmt, ...);
-
-// if next token is the expected symbol, it reads one token and return true.
-// otherwise, it returns false.
-bool consume(char *op);
-
-// if next token is the expected symbol, it reads one token.
-// otherwise, it reports error.
+Token *consume(char *op);
 void expect(char *op);
-
-
-// if next token is the expected symbol, it reads one token and return the value.
-// otherwise, it reports error.
 int expect_number();
-
 bool at_eof();
-
-// create token and connect it ot 'cur'
-Token *new_token(TokenKind kind, Token *cur, char *str, int len);
-
 bool startwith(char *p, char *q);
-
+Token *new_token(TokenKind kind, Token *cur, char *str, int len);
 Token *tokenize();
 
 typedef enum
@@ -88,31 +60,36 @@ struct Node
 };
 
 Node *new_node(NodeKind kind, Node *lhs, Node *rhs);
-
 Node *new_num(int val);
-
-// = stmt*
 void program();
-// = expr ";"
 Node *stmt();
-// = assign
 Node *expr();
-// = equality ("=" assign)?
 Node *assign();
-// = relational ("==" relational | "!=" relational)*
 Node *equality();
-// = add ("<" add | "<=" add | ">" add | ">=" add)*
 Node *relational();
-// = mul ("+" mul | "-" mul)*
 Node *add();
-// = unary ("*" unary | "/" unary)*
 Node *mul();
-// = ("+" | "-")? primary
 Node *unary();
-// = num | ident | "(" expr ")"
 Node *primary();
+
+typedef struct LVar LVar;
+
+struct LVar
+{
+    LVar *next; // next var or NULL
+    char *name; // var name
+    int len; // name length
+    int offset; // offset from RBP
+};
+
+LVar *find_lvar(Token *tok);
 
 void gen_lval(Node *node);
 void gen(Node *node);
+
+extern char *user_input;
+extern Token *token;
+extern Node *code[100];
+extern LVar *locals;
 
 int main(int argc, char **argv);
