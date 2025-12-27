@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+// ========================= prototype declaration BEGIN ========================= 
 typedef enum
 {
     TK_RESERVED, // symbol
@@ -13,6 +14,22 @@ typedef enum
 } TokenType;
 
 typedef struct Token Token;
+
+Token *current_token;
+
+void error(char *fmt, ...);
+bool read(char op);
+void expect(char op);
+int get_number();
+bool at_eof();
+Token *new_token(TokenType type, Token *cur, char *str);
+Token *tokenizer();
+
+char *user_input;
+void error_at(char *loc, char *fmt, ...);
+// ========================= prototype declaration END ========================= 
+
+// ========================= token BEGIN ========================= 
 struct Token
 {
     TokenType type; // token type
@@ -21,14 +38,27 @@ struct Token
     char *str; // token string
 };
 
-Token *current_token;
-
 // report error
 void error(char *fmt, ...)
 {
     va_list ap;
     va_start(ap, fmt);
     vfprintf(stderr, fmt, ap);
+    fprintf(stderr, "\n");
+    exit(1);
+}
+
+// report error position
+void error_at(char *loc, char *fmt, ...)
+{
+    va_list ap;
+    va_start(ap, fmt);
+
+    int pos = loc - user_input;
+    fprintf(stderr, "%s\n", user_input);
+    fprintf(stderr, "%*s", pos, " "); // output <pos> spaces
+    fprintf(stderr, "^ ");
+    fprintf(stderr, fmt, ap);
     fprintf(stderr, "\n");
     exit(1);
 }
@@ -48,7 +78,7 @@ void expect(char op)
 {
     // if next token is not expected symbol
     if (current_token->type != TK_RESERVED || current_token->str[0] != op)
-        error("Not '%c'", op);
+        error_at(current_token->str, "expected '%c'", op);
     current_token = current_token->next;
 }
 
@@ -56,7 +86,7 @@ void expect(char op)
 int get_number()
 {
     if (current_token->type != TK_NUM)
-        error("Not number");
+        error_at(current_token->str, "expected a number");
     int val = current_token->val;
     current_token = current_token->next;
     return val;
@@ -76,8 +106,9 @@ Token *new_token(TokenType type, Token *cur, char *str)
     return token;
 }
 
-Token *tokenizer(char *p)
+Token *tokenizer()
 {
+    char *p = user_input;
     Token head;
     head.next = NULL;
     Token *cur = &head;
@@ -103,12 +134,13 @@ Token *tokenizer(char *p)
             continue;
         }
 
-        error("Cannot tokenize");
+        error_at(p, "expected a number");
     }
 
     new_token(TK_EOF, cur, p);
     return head.next;
 }
+// ========================= token END ========================= 
 
 int main(int argc, char **argv)
 {
@@ -123,8 +155,11 @@ int main(int argc, char **argv)
     printf(".globl main\n");
     printf("main:\n");
 
+    // get user input
+    user_input = argv[1];
+
     // tokenize
-    current_token = tokenizer(argv[1]);
+    current_token = tokenizer();
 
     // check first number
     printf("    mov rax, %d\n", get_number());
