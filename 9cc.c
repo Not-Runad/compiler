@@ -39,6 +39,7 @@ Node *new_binary(NodeType type, Node *lhs, Node *rhs);
 Node *new_num(int val);
 Node *expr();
 Node *mul();
+Node *unary();
 Node *primary();
 
 Token *current_token;
@@ -189,18 +190,27 @@ Node *expr() {
     }
 }
 
-// mul = primary ("*" primary | "/" primary)*
+// mul = unary ("*" unary | "/" unary)*
 Node *mul() {
-    Node *node = primary();
+    Node *node = unary();
     
     while (1) {
         if (read('*'))
-            node = new_binary(ND_MUL, node, primary());
+            node = new_binary(ND_MUL, node, unary());
         else if (read('/'))
-            node = new_binary(ND_DIV, node, primary());
+            node = new_binary(ND_DIV, node, unary());
         else
             return node;
     }
+}
+
+// unary = ("+" | "-")? primary
+Node *unary() {
+    if (read('+'))
+        return primary();
+    if (read('-'))
+        return new_binary(ND_SUB, new_num(0), primary());
+    return primary();
 }
 
 // primary = num | "(" expr ")"
