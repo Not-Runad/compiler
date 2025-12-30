@@ -6,18 +6,27 @@
 #include <string.h>
 
 // ========================= prototype declaration BEGIN ========================= 
-typedef enum
-{
+// token type
+typedef enum {
     TK_RESERVED, // symbol
     TK_NUM, // integer
     TK_EOF, // EOF
 } TokenType;
 
-typedef struct Token Token;
+// node type
+typedef enum {
+    ND_ADD, // +
+    ND_SUB, // -
+    ND_MUL, // *
+    ND_DIV, // /
+    ND_NUM, // integer
+} NodeType;
 
-Token *current_token;
+typedef struct Token Token;
+typedef struct Node Node;
 
 void error(char *fmt, ...);
+void error_at(char *loc, char *fmt, ...);
 bool read(char op);
 void expect(char op);
 int get_number();
@@ -25,13 +34,19 @@ bool at_eof();
 Token *new_token(TokenType type, Token *cur, char *str);
 Token *tokenizer();
 
+Node *new_node(NodeType type);
+Node *new_binary(NodeType type, Node *lhs, Node *rhs);
+Node *new_num(int val);
+Node *expr();
+Node *mul();
+Node *primary();
+
+Token *current_token;
 char *user_input;
-void error_at(char *loc, char *fmt, ...);
 // ========================= prototype declaration END ========================= 
 
 // ========================= token BEGIN ========================= 
-struct Token
-{
+struct Token {
     TokenType type; // token type
     Token *next; // next token
     int val; // the value of number
@@ -39,8 +54,7 @@ struct Token
 };
 
 // report error
-void error(char *fmt, ...)
-{
+void error(char *fmt, ...) {
     va_list ap;
     va_start(ap, fmt);
     vfprintf(stderr, fmt, ap);
@@ -49,14 +63,13 @@ void error(char *fmt, ...)
 }
 
 // report error position
-void error_at(char *loc, char *fmt, ...)
-{
+void error_at(char *loc, char *fmt, ...) {
     va_list ap;
     va_start(ap, fmt);
 
     int pos = loc - user_input;
     fprintf(stderr, "%s\n", user_input);
-    fprintf(stderr, "%*s", pos, " "); // output <pos> spaces
+    fprintf(stderr, "%*s", pos, " ");
     fprintf(stderr, "^ ");
     fprintf(stderr, fmt, ap);
     fprintf(stderr, "\n");
@@ -64,8 +77,7 @@ void error_at(char *loc, char *fmt, ...)
 }
 
 // read next token
-bool read(char op)
-{
+bool read(char op) {
     // if next token is not expected symbol
     if (current_token->type != TK_RESERVED || current_token->str[0] != op)
         return false;
@@ -74,8 +86,7 @@ bool read(char op)
 }
 
 // expect next token
-void expect(char op)
-{
+void expect(char op) {
     // if next token is not expected symbol
     if (current_token->type != TK_RESERVED || current_token->str[0] != op)
         error_at(current_token->str, "expected '%c'", op);
@@ -83,8 +94,7 @@ void expect(char op)
 }
 
 // get number
-int get_number()
-{
+int get_number() {
     if (current_token->type != TK_NUM)
         error_at(current_token->str, "expected a number");
     int val = current_token->val;
@@ -92,13 +102,11 @@ int get_number()
     return val;
 }
 
-bool at_eof()
-{
+bool at_eof() {
     return current_token->type == TK_EOF;
 }
 
-Token *new_token(TokenType type, Token *cur, char *str)
-{
+Token *new_token(TokenType type, Token *cur, char *str) {
     Token *token = calloc(1, sizeof(Token));
     token->type = type;
     token->str = str;
@@ -106,35 +114,30 @@ Token *new_token(TokenType type, Token *cur, char *str)
     return token;
 }
 
-Token *tokenizer()
-{
+Token *tokenizer() {
     char *p = user_input;
     Token head;
     head.next = NULL;
     Token *cur = &head;
 
-    while (*p)
-    {
-        if (isspace(*p))
-        {
+    while (*p) {
+        if (isspace(*p)) {
             p++;
             continue;
         }
 
-        if (*p == '+' || *p == '-')
-        {
+        if (strchr("+-*/()", *p)) {
             cur = new_token(TK_RESERVED, cur, p++);
             continue;
         }
 
-        if (isdigit(*p))
-        {
+        if (isdigit(*p)) {
             cur = new_token(TK_NUM, cur, p);
             cur->val = strtol(p, &p, 10);
             continue;
         }
 
-        error_at(p, "expected a number");
+        error_at(p, "invalid token");
     }
 
     new_token(TK_EOF, cur, p);
@@ -142,11 +145,110 @@ Token *tokenizer()
 }
 // ========================= token END ========================= 
 
-int main(int argc, char **argv)
-{
-    if (argc != 2)
-    {
-        fprintf(stderr, "引数の個数が正しくありません\n");
+
+
+// ========================= node BEGIN ========================= 
+
+struct Node {
+    NodeType type; // node type
+    Node *lhs; // left-hand side
+    Node *rhs; // right-hand side
+    int val; // value (when the type is ND_NUM)
+};
+
+Node *new_node(NodeType type) {
+    Node *node = calloc(1, sizeof(Node));
+    node->type = type;
+    return node;
+}
+
+Node *new_binary(NodeType type, Node *lhs, Node *rhs) {
+    Node *node = new_node(type);
+    node->lhs = lhs;
+    node->rhs = rhs;
+    return node;
+}
+
+Node *new_num(int val) {
+    Node *node = new_node(ND_NUM);
+    node->val = val;
+    return node;
+}
+
+// expr = mul ("+" mul | "-" mul)*
+Node *expr() {
+    Node *node = mul();
+
+    while (1) {
+        if (read('+'))
+            node = new_binary(ND_ADD, node, mul());
+        else if (read('-'))
+            node = new_binary(ND_SUB, node, mul());
+        else
+            return node;
+    }
+}
+
+// mul = primary ("*" primary | "/" primary)*
+Node *mul() {
+    Node *node = primary();
+    
+    while (1) {
+        if (read('*'))
+            node = new_binary(ND_MUL, node, primary());
+        else if (read('/'))
+            node = new_binary(ND_DIV, node, primary());
+        else
+            return node;
+    }
+}
+
+// primary = num | "(" expr ")"
+Node *primary() {
+    if (read('(')) {
+        Node *node = expr();
+        expect(')');
+        return node;
+    }
+
+    return new_num(get_number());
+}
+
+void assembler(Node *node) {
+    if (node->type == ND_NUM) {
+        printf("    push %d\n", node->val);
+        return;
+    }
+
+    assembler(node->lhs);
+    assembler(node->rhs);
+
+    printf("    pop rdi\n");
+    printf("    pop rax\n");
+
+    switch (node->type) {
+    case ND_ADD:
+        printf("    add rax, rdi\n");
+        break;
+    case ND_SUB:
+        printf("    sub rax, rdi\n");
+        break;
+    case ND_MUL:
+        printf("    imul rax, rdi\n");
+        break;
+    case ND_DIV:
+        printf("    cqo\n");
+        printf("    idiv rdi\n");
+        break;
+    }
+
+    printf("    push rax\n");
+}
+// ========================= node END ========================= 
+
+int main(int argc, char **argv) {
+    if (argc != 2) {
+        fprintf(stderr, "invalid number of arguments");
         return 1;
     }
 
@@ -157,25 +259,16 @@ int main(int argc, char **argv)
 
     // get user input
     user_input = argv[1];
-
     // tokenize
     current_token = tokenizer();
+    // initialize expression
+    Node *node = expr();
 
-    // check first number
-    printf("    mov rax, %d\n", get_number());
+    // code generation
+    assembler(node);
 
-    while (!at_eof())
-    {
-        if (read('+'))
-        {
-            printf("    add rax, %d\n", get_number());
-            continue;
-        }
-
-        expect('-');
-        printf("    sub rax, %d\n", get_number());
-    }
-
+    // epilogue
+    printf("    pop rax\n");
     printf("    ret\n");
     return 0;
 }
