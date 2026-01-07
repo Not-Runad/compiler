@@ -37,6 +37,14 @@ bool read(char *op) {
     return true;
 }
 
+Token *read_ident() {
+    if (current_token->type != TK_IDENT)
+        return NULL;
+    Token *before_token = current_token;
+    current_token = current_token->next;
+    return before_token;
+}
+
 // expect next token
 void expect(char *op) {
     // if next token is not expected symbol
@@ -96,9 +104,14 @@ Token *tokenizer() {
         }
 
         // single-letter panctuator
-        if (strchr("+-*/()<>", *p)) {
-            cur = new_token(TK_RESERVED, cur, p, 1);
-            p += 1;
+        if (strchr("+-*/()<>;=", *p)) {
+            cur = new_token(TK_RESERVED, cur, p++, 1);
+            continue;
+        }
+
+        // Identifier
+        if ('a' <= *p && *p <= 'z') {
+            cur = new_token(TK_IDENT, cur, p++, 1);
             continue;
         }
 

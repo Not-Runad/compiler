@@ -8,6 +8,7 @@
 // token type
 typedef enum {
     TK_RESERVED, // symbol
+    TK_IDENT, // indentifier
     TK_NUM, // integer
     TK_EOF, // EOF
 } TokenType;
@@ -31,15 +32,19 @@ typedef enum {
     ND_NE, // !=
     ND_LT, // <
     ND_LE, // <=
+    ND_ASSIGN, // =
+    ND_LVAR, // local variable
     ND_NUM, // integer
 } NodeType;
 
 typedef struct Node Node;
 struct Node {
     NodeType type; // node type
+    Node *next; // next node
     Node *lhs; // left-hand side
     Node *rhs; // right-hand side
-    int val; // value (when the type is ND_NUM)
+    int val; // value (used if type == ND_NUM)
+    char *name; // variable name (used if type == ND_LVAR)
 };
 
 extern Token *current_token;
@@ -48,6 +53,7 @@ extern char *user_input;
 void error(char *fmt, ...);
 void error_at(char *loc, char *fmt, ...);
 bool read(char *op);
+Token *read_ident();
 void expect(char *op);
 int get_number();
 bool at_eof();
@@ -57,5 +63,8 @@ Token *tokenizer();
 Node *new_node(NodeType type);
 Node *new_binary(NodeType type, Node *lhs, Node *rhs);
 Node *new_num(int val);
+Node *new_lvar(char *name);
 
-Node *expr();
+Node *program();
+
+void gen_code(Node *node);

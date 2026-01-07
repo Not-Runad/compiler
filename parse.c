@@ -19,7 +19,16 @@ Node *new_num(int val) {
     return node;
 }
 
+Node *new_lvar(char *name) {
+    Node *node = new_node(ND_LVAR);
+    node->name = name;
+    return node;
+}
+
+Node *program();
+Node *stmt();
 Node *expr();
+Node *assign();
 Node *equality();
 Node *relational();
 Node *add();
@@ -27,9 +36,37 @@ Node *mul();
 Node *unary();
 Node *primary();
 
-// expr = equarity
+// program = stmt*
+Node *program() {
+    Node head;
+    head.next = NULL;
+    Node *cur = &head;
+
+    while (!at_eof()) {
+        cur->next = stmt();
+        cur = cur->next;
+    }
+    return head.next;
+}
+
+// stmt = expr ";"
+Node *stmt() {
+    Node *node = expr();
+    expect(";");
+    return node;
+}
+
+// expr = assign
 Node *expr() {
-    return equality();
+    return assign();
+}
+
+// assign = equarity ("=" assign)?
+Node *assign() {
+    Node *node = equality();
+    if (read("="))
+        return new_binary(ND_ASSIGN, node, assign());
+    return node;
 }
 
 // equarity = relational ("==" relational | "!=" relational)*
@@ -101,13 +138,17 @@ Node *unary() {
     return primary();
 }
 
-// primary = num | "(" expr ")"
+// primary = "(" expr ")" | ident | num
 Node *primary() {
     if (read("(")) {
         Node *node = expr();
         expect(")");
         return node;
     }
+
+    Token *ident_token = read_ident();
+    if (ident_token)
+        return new_lvar(ident_token->str);
 
     return new_num(get_number());
 }
