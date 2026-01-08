@@ -5,6 +5,14 @@
 #include <stdlib.h>
 #include <string.h>
 
+// local variable type
+typedef struct LVar LVar;
+struct LVar {
+    LVar *next; // next variable or NULL
+    char *name; // variable name
+    int offset; // offset from RBP
+};
+
 // token type
 typedef enum {
     TK_RESERVED, // symbol
@@ -44,11 +52,8 @@ struct Node {
     Node *lhs; // left-hand side
     Node *rhs; // right-hand side
     int val; // value (used if type == ND_NUM)
-    char *name; // variable name (used if type == ND_LVAR)
+    LVar *lvar; // variable (used if type == ND_LVAR)
 };
-
-extern Token *current_token;
-extern char *user_input;
 
 void error(char *fmt, ...);
 void error_at(char *loc, char *fmt, ...);
@@ -57,14 +62,12 @@ Token *read_ident();
 void expect(char *op);
 int get_number();
 bool at_eof();
-Token *new_token(TokenType type, Token *cur, char *str, int len);
-Token *tokenizer();
-
-Node *new_node(NodeType type);
-Node *new_binary(NodeType type, Node *lhs, Node *rhs);
-Node *new_num(int val);
-Node *new_lvar(char *name);
 
 Node *program();
 
+Token *tokenizer();
 void gen_code(Node *node);
+
+// global variables
+extern Token *current_token;
+extern char *user_input;

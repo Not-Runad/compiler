@@ -49,4 +49,7 @@ assert 3 "a = 3; a;"
 assert 8 "a = 3; z = 5; a + z;"
 assert 6 "a = b = 3; a + b;"
 
+assert 3 "foo=3; foo;"
+assert 2 "foo123 = 3; bar456 = 5; -foo123 + + bar456;"
+
 echo OK

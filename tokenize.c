@@ -21,7 +21,7 @@ void error_at(char *loc, char *fmt, ...) {
     fprintf(stderr, "%s\n", user_input);
     fprintf(stderr, "%*s", pos, " ");
     fprintf(stderr, "^ ");
-    fprintf(stderr, fmt, ap);
+    vfprintf(stderr, fmt, ap);
     fprintf(stderr, "\n");
     exit(1);
 }
@@ -72,6 +72,14 @@ bool start_with(char *p, char *q) {
     return memcmp(p, q, strlen(q)) == 0;
 }
 
+bool is_alphabet(char c) {
+    return ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z') || c == '_';
+}
+
+bool is_alphabet_or_num(char c) {
+    return is_alphabet(c) || ('0' <= c && c <= '9');
+}
+
 Token *new_token(TokenType type, Token *cur, char *str, int len) {
     Token *token = calloc(1, sizeof(Token));
     token->type = type;
@@ -88,6 +96,7 @@ Token *tokenizer() {
     Token *cur = &head;
 
     while (*p) {
+        // skip whitespace chars
         if (isspace(*p)) {
             p++;
             continue;
@@ -110,8 +119,10 @@ Token *tokenizer() {
         }
 
         // Identifier
-        if ('a' <= *p && *p <= 'z') {
-            cur = new_token(TK_IDENT, cur, p++, 1);
+        if (is_alphabet(*p)) {
+            char *q = p++;
+            while (is_alphabet_or_num(*p)) p++;
+            cur = new_token(TK_IDENT, cur, q, p - q);
             continue;
         }
 

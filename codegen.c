@@ -4,9 +4,8 @@ void gen_addr(Node *node) {
     if (node->type != ND_LVAR)
         error("not an left value");
     
-    int offset = (node->name[0] - 'a' + 1) * 8;
     printf("    mov rax, rbp\n");
-    printf("    sub rax, %d\n", offset);
+    printf("    sub rax, %d\n", node->lvar->offset);
     printf("    push rax\n");
 }
 
