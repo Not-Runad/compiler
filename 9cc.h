@@ -18,7 +18,7 @@ typedef enum {
     TK_RESERVED, // symbol
     TK_IDENT, // indentifier
     TK_NUM, // integer
-    TK_EOF, // EOF
+    TK_EOF // EOF
 } TokenType;
 
 typedef struct Token Token;
@@ -43,6 +43,7 @@ typedef enum {
     ND_ASSIGN, // =
     ND_LVAR, // local variable
     ND_NUM, // integer
+    ND_RETURN // return
 } NodeType;
 
 typedef struct Node Node;

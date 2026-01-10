@@ -42,6 +42,13 @@ void gen_code(Node *node) {
         gen_code(node->rhs);
         store();
         return;
+    case ND_RETURN:
+        gen_code(node->lhs);
+        printf("    pop rax\n");
+        printf("    mov rsp, rbp\n");
+        printf("    pop rbp\n");
+        printf("    ret\n");
+        return;
     }
 
     gen_code(node->lhs);

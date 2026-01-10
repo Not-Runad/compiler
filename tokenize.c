@@ -68,16 +68,18 @@ bool at_eof() {
     return current_token->type == TK_EOF;
 }
 
-bool start_with(char *p, char *q) {
+bool startwith(char *p, char *q) {
     return memcmp(p, q, strlen(q)) == 0;
 }
 
-bool is_alphabet(char c) {
-    return ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z') || c == '_';
+bool is_alpha(char c) {
+    return ('a' <= c && c <= 'z')
+        || ('A' <= c && c <= 'Z')
+        || c == '_';
 }
 
-bool is_alphabet_or_num(char c) {
-    return is_alphabet(c) || ('0' <= c && c <= '9');
+bool is_alnum(char c) {
+    return is_alpha(c) || ('0' <= c && c <= '9');
 }
 
 Token *new_token(TokenType type, Token *cur, char *str, int len) {
@@ -102,26 +104,33 @@ Token *tokenizer() {
             continue;
         }
 
-        // multi-letter panctuator
-        if (start_with(p, "==") 
-            || start_with(p, "!=")
-            || start_with(p, "<=")
-            || start_with(p, ">=")) {
+        // multi-letter punctuator
+        if (startwith(p, "==") 
+            || startwith(p, "!=")
+            || startwith(p, "<=")
+            || startwith(p, ">=")) {
             cur = new_token(TK_RESERVED, cur, p, 2);
             p += 2;
             continue;
         }
 
-        // single-letter panctuator
+        // single-letter punctuator
         if (strchr("+-*/()<>;=", *p)) {
             cur = new_token(TK_RESERVED, cur, p++, 1);
             continue;
         }
 
+        // return keyword
+        if (startwith(p, "return") && !is_alnum(p[6])) {
+            cur = new_token(TK_RESERVED, cur, p, 6);
+            p += 6;
+            continue;
+        }
+
         // Identifier
-        if (is_alphabet(*p)) {
+        if (is_alpha(*p)) {
             char *q = p++;
-            while (is_alphabet_or_num(*p)) p++;
+            while (is_alnum(*p)) p++;
             cur = new_token(TK_IDENT, cur, q, p - q);
             continue;
         }

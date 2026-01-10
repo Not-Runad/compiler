@@ -59,9 +59,16 @@ Node *program() {
     return head.next;
 }
 
-// stmt = expr ";"
+// stmt = ("return")? expr ";"
 Node *stmt() {
-    Node *node = expr();
+    Node *node;
+    if (read("return")) {
+        node = new_binary(ND_RETURN, expr(), NULL);
+        expect(";");
+        return node;
+    }
+
+    node = expr();
     expect(";");
     return node;
 }
