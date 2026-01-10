@@ -59,12 +59,26 @@ Node *program() {
     return head.next;
 }
 
-// stmt = ("return")? expr ";"
+// stmt =  expr ";"
+//      | "if" "(" expr ")" stmt ("else" stmt)?
+//      | "return" expr ";"
 Node *stmt() {
     Node *node;
+
     if (read("return")) {
         node = new_binary(ND_RETURN, expr(), NULL);
         expect(";");
+        return node;
+    }
+
+    if (read("if")) {
+        Node *node = new_node(ND_IF);
+        expect("(");
+        node->cond = expr();
+        expect(")");
+        node->then = stmt();
+        if (read("else"))
+            node->els = stmt();
         return node;
     }
 

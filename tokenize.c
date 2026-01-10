@@ -68,10 +68,6 @@ bool at_eof() {
     return current_token->type == TK_EOF;
 }
 
-bool startwith(char *p, char *q) {
-    return memcmp(p, q, strlen(q)) == 0;
-}
-
 bool is_alpha(char c) {
     return ('a' <= c && c <= 'z')
         || ('A' <= c && c <= 'Z')
@@ -80,6 +76,43 @@ bool is_alpha(char c) {
 
 bool is_alnum(char c) {
     return is_alpha(c) || ('0' <= c && c <= '9');
+}
+
+bool startwith(char *p, char *q) {
+    return memcmp(p, q, strlen(q)) == 0;
+}
+
+char *startwith_reserved(char *p) {
+    // keyword
+    static char *kw[] = {
+        "return",
+        "if",
+        "else"
+    };
+
+    // decide match keyword
+    for (int i = 0; i < sizeof(kw) / sizeof(*kw); i++) {
+        int len = strlen(kw[i]);
+        if (startwith(p, kw[i]) && !is_alnum(p[len]))
+            return kw[i];
+    }
+
+    // multi-letter punctuator
+    static char *op[] = {
+        "==",
+        "!=",
+        "<=",
+        ">="
+    };
+
+    // decide matchj multi-letter punctuator
+    for (int i = 0; i < sizeof(op) / sizeof(*op); i++) {
+        if (startwith(p, op[i]))
+            return op[i];
+    }
+
+    // unmatched
+    return NULL;
 }
 
 Token *new_token(TokenType type, Token *cur, char *str, int len) {
@@ -104,26 +137,18 @@ Token *tokenizer() {
             continue;
         }
 
-        // multi-letter punctuator
-        if (startwith(p, "==") 
-            || startwith(p, "!=")
-            || startwith(p, "<=")
-            || startwith(p, ">=")) {
-            cur = new_token(TK_RESERVED, cur, p, 2);
-            p += 2;
+        // keyword or multi-letter punctuator
+        char *kw = startwith_reserved(p);
+        if (kw) {
+            int len = strlen(kw);
+            cur = new_token(TK_RESERVED, cur, p, len);
+            p += len;
             continue;
         }
 
         // single-letter punctuator
         if (strchr("+-*/()<>;=", *p)) {
             cur = new_token(TK_RESERVED, cur, p++, 1);
-            continue;
-        }
-
-        // return keyword
-        if (startwith(p, "return") && !is_alnum(p[6])) {
-            cur = new_token(TK_RESERVED, cur, p, 6);
-            p += 6;
             continue;
         }
 

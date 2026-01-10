@@ -1,5 +1,7 @@
 #include "9cc.h"
 
+int seq_label = 0;
+
 void gen_addr(Node *node) {
     if (node->type != ND_LVAR)
         error("not an left value");
@@ -41,6 +43,27 @@ void gen_code(Node *node) {
         gen_addr(node->lhs);
         gen_code(node->rhs);
         store();
+        return;
+    case ND_IF:
+        int label = seq_label++;
+        if (node->els) {
+            gen_code(node->cond);
+            printf("    pop rax\n");
+            printf("    cmp rax, 0\n");
+            printf("    je .Lelse%d\n", label);
+            gen_code(node->then);
+            printf("    jmp .Lend%d\n", label);
+            printf(".Lelse%d:\n", label);
+            gen_code(node->els);
+            printf(".Lend%d:\n", label);
+        } else {
+            gen_code(node->cond);
+            printf("    pop rax\n");
+            printf("    cmp rax, 0\n");
+            printf("    je .Lend%d\n", label);
+            gen_code(node->then);
+            printf(".Lend%d:\n", label);
+        }
         return;
     case ND_RETURN:
         gen_code(node->lhs);

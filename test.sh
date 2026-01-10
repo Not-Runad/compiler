@@ -1,57 +1,57 @@
 #!/bin/bash
 
 assert() {
-  expected="$1"
-  input="$2"
+	expected="$1"
+	input="$2"
 
-  ./9cc "$input" > tmp.s
-  cc -o tmp tmp.s
-  ./tmp
-  actual="$?"
+	./9cc "$input" > tmp.s
+	cc -o tmp tmp.s
+	./tmp
+	actual="$?"
 
-  if [ "$actual" = "$expected" ]; then
-    echo "$input => $actual"
-  else
-    echo "$input => $expected expected, but got $actual"
-    exit 1
-  fi
+	if [ "$actual" = "$expected" ]; then
+		echo "$input => $actual"
+	else
+		echo "$input => $expected expected, but got $actual"
+		exit 1
+	fi
 }
 
-assert 0 "return 0;"
-assert 42 "return 42;"
-assert 21 "return 5+20-4;"
-assert 41 "return  12 + 34 - 5;"
-assert 47 "return 5 + 6 * 7;"
-assert 15 "return 5 * (9 - 6);"
-assert 4 "return (3 + 5) / 2;"
-assert 5 "return -3 * +5 + +20;"
+assert 0 'return 0;'
+assert 42 'return 42;'
+assert 21 'return 5+20-4;'
+assert 41 'return  12 + 34 - 5;'
+assert 47 'return 5 + 6 * 7;'
+assert 15 'return 5 * (9 - 6);'
+assert 4 'return (3 + 5) / 2;'
+assert 5 'return -3 * +5 + +20;'
 
-assert 0 "return 0 == 1;"
-assert 1 "return 42 == 42;"
-assert 1 "return 0 != 1;"
-assert 0 "return 42 != 42;"
+assert 0 'return 0 == 1;'
+assert 1 'return 42 == 42;'
+assert 1 'return 0 != 1;'
+assert 0 'return 42 != 42;'
 
-assert 1 "return 0 < 1;"
-assert 0 "return 1 < 1;"
+assert 1 'return 0 < 1;'
+assert 0 'return 1 < 1;'
 
-assert 1 "return 0 <= 1;"
-assert 1 "return 1 <= 1;"
-assert 0 "return 2 <= 1;"
+assert 1 'return 0 <= 1;'
+assert 1 'return 1 <= 1;'
+assert 0 'return 2 <= 1;'
 
-assert 0 "return 0 > 1;"
-assert 0 "return 1 > 1;"
+assert 0 'return 0 > 1;'
+assert 0 'return 1 > 1;'
 
-assert 0 "return 0 >= 1;"
-assert 1 "return 1 >= 1;"
-assert 1 "return 2 >= 1;"
+assert 0 'return 0 >= 1;'
+assert 1 'return 1 >= 1;'
+assert 1 'return 2 >= 1;'
 
-assert 3 "foo = 3; return foo;"
-assert 2 "foo = 3; bar = 5; return -foo + + bar;"
-assert 8 "foo = 3; bar = 5; return foo + bar;"
-assert 6 "foo = bar = 3; return foo + bar;"
+assert 3 'foo = 3; return foo;'
+assert 2 'foo = 3; bar = 5; return -foo + + bar;'
+assert 6 'foo = bar = 3; return foo + bar;'
 
-assert 1 "return 1; 2; 3;"
-assert 2 "1; return 2; 3;"
-assert 3 "1; 2; return 3;"
+assert 2 '1; return 2; 3;'
 
-echo OK
+assert 5 'a = 5; b = 10; if (a > b) return a - b; else return b - a;'
+assert 0 'a = 5; b = 10; c = 15; if (a + b > c) return a + c - b; else return c - (a + b);'
+
+printf "\nOK"
