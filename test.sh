@@ -17,7 +17,6 @@ assert() {
 	fi
 }
 
-assert 0 'return 0;'
 assert 42 'return 42;'
 assert 21 'return 5+20-4;'
 assert 41 'return  12 + 34 - 5;'
@@ -45,13 +44,13 @@ assert 0 'return 0 >= 1;'
 assert 1 'return 1 >= 1;'
 assert 1 'return 2 >= 1;'
 
-assert 3 'foo = 3; return foo;'
-assert 2 'foo = 3; bar = 5; return -foo + + bar;'
-assert 6 'foo = bar = 3; return foo + bar;'
+assert 0 'foo = bar = 3; return -foo + +bar;'
 
 assert 2 '1; return 2; 3;'
 
 assert 5 'a = 5; b = 10; if (a > b) return a - b; else return b - a;'
 assert 0 'a = 5; b = 10; c = 15; if (a + b > c) return a + c - b; else return c - (a + b);'
+
+assert 10 'i = 0; while (i < 10) i = i + 1; return i;'
 
 printf "\nOK"

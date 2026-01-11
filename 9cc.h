@@ -44,6 +44,7 @@ typedef enum {
     ND_LVAR, // local variable
     ND_NUM, // integer
     ND_IF, // if
+    ND_WHILE, // while
     ND_RETURN // return
 } NodeType;
 
@@ -56,7 +57,7 @@ struct Node {
     int val; // value (used if type == ND_NUM)
     LVar *lvar; // variable (used if type == ND_LVAR)
     
-    // if statement
+    // conditional statement
     Node *cond; // condition (expressed with expr)
     Node *then;
     Node *els; 

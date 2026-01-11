@@ -85,9 +85,10 @@ bool startwith(char *p, char *q) {
 char *startwith_reserved(char *p) {
     // keyword
     static char *kw[] = {
-        "return",
         "if",
-        "else"
+        "else",
+        "while",
+        "return"
     };
 
     // decide match keyword
@@ -152,7 +153,7 @@ Token *tokenizer() {
             continue;
         }
 
-        // Identifier
+        // identifier
         if (is_alpha(*p)) {
             char *q = p++;
             while (is_alnum(*p)) p++;

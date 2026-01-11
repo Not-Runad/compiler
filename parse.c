@@ -61,6 +61,7 @@ Node *program() {
 
 // stmt =  expr ";"
 //      | "if" "(" expr ")" stmt ("else" stmt)?
+//      | "while" "(" expr ")" stmt
 //      | "return" expr ";"
 Node *stmt() {
     Node *node;
@@ -79,6 +80,15 @@ Node *stmt() {
         node->then = stmt();
         if (read("else"))
             node->els = stmt();
+        return node;
+    }
+
+    if (read("while")) {
+        Node *node = new_node(ND_WHILE);
+        expect("(");
+        node->cond = expr();
+        expect(")");
+        node->then = stmt();
         return node;
     }
 
