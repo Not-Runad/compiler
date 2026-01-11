@@ -60,6 +60,7 @@ Node *program() {
 }
 
 // stmt =  expr ";"
+//      | "{" stmt* "}"
 //      | "if" "(" expr ")" stmt ("else" stmt)?
 //      | "while" "(" expr ")" stmt
 //      | "for" "(" expr? ";" expr? ";" expr? ")" stmt
@@ -120,6 +121,22 @@ Node *stmt() {
         }
 
         node->then = stmt();
+        return node;
+    }
+
+    // block
+    if (read("{")) {
+        Node head;
+        head.next = NULL;
+        Node *cur = &head;
+
+        while (!read("}")) {
+            cur->next = stmt();
+            cur = cur->next;
+        }
+        
+        Node *node = new_node(ND_BLOCK);
+        node->stmts = head.next;
         return node;
     }
 

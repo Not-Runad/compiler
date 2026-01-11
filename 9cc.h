@@ -46,7 +46,8 @@ typedef enum {
     ND_IF, // if
     ND_WHILE, // while
     ND_FOR, // for
-    ND_RETURN // return
+    ND_RETURN, // return
+    ND_BLOCK // block { ... }
 } NodeType;
 
 typedef struct Node Node;
@@ -64,6 +65,9 @@ struct Node {
     Node *els; // else
     Node *init; // initializer
     Node *inc; // increment
+
+    // in block
+    Node *stmts; // statements in block
 };
 
 void error(char *fmt, ...);
@@ -77,8 +81,9 @@ bool at_eof();
 Node *program();
 
 Token *tokenizer();
-void gen_code(Node *node);
+void build(Node *node);
 
 // global variables
 extern Token *current_token;
 extern char *user_input;
+extern LVar *locals;

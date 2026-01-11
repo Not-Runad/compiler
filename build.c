@@ -99,6 +99,10 @@ void gen_code(Node *node) {
         printf("    pop rbp\n");
         printf("    ret\n");
         return;
+    case ND_BLOCK:
+        for (Node *n = node->stmts; n; n = n->next)
+            gen_code(n);
+        return;
     }
 
     gen_code(node->lhs);
@@ -144,4 +148,32 @@ void gen_code(Node *node) {
     }
 
     printf("    push rax\n");
+}
+
+void build(Node *node) {
+    // prologue
+    printf(".intel_syntax noprefix\n");
+    printf(".globl main\n");
+    printf("main:\n");
+
+    // allocate variables memory
+    int allocate_size = 0;
+    for (LVar *var = locals; var; var = var->next)
+        allocate_size += 8;
+    printf("    push rbp\n");
+    printf("    mov rbp, rsp\n");
+    printf("    sub rsp, %d\n", allocate_size);
+
+    // generate code
+    for (Node *n = node; n; n = n->next) {
+        gen_code(n);
+        // a value of expr result is left, so pop it to prevent an stack-overflow
+        printf("    pop rax\n");
+    }
+
+    // epilogue
+    // last expr result on rax is return value
+    printf("    mov rsp, rbp\n");
+    printf("    pop rbp\n");
+    printf("    ret\n");
 }
