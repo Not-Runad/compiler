@@ -62,16 +62,19 @@ Node *program() {
 // stmt =  expr ";"
 //      | "if" "(" expr ")" stmt ("else" stmt)?
 //      | "while" "(" expr ")" stmt
+//      | "for" "(" expr? ";" expr? ";" expr? ")" stmt
 //      | "return" expr ";"
 Node *stmt() {
     Node *node;
 
+    // return statement
     if (read("return")) {
         node = new_binary(ND_RETURN, expr(), NULL);
         expect(";");
         return node;
     }
 
+    // if-else statement
     if (read("if")) {
         Node *node = new_node(ND_IF);
         expect("(");
@@ -83,11 +86,39 @@ Node *stmt() {
         return node;
     }
 
+    // while statement
     if (read("while")) {
         Node *node = new_node(ND_WHILE);
         expect("(");
         node->cond = expr();
         expect(")");
+        node->then = stmt();
+        return node;
+    }
+
+    // for statement
+    if (read("for")) {
+        Node *node = new_node(ND_FOR);
+        expect("(");
+
+        // if initialize statement exists
+        if (!read(";")) {
+            node->init = expr();
+            expect(";");
+        }
+
+        // if conditional statement exists
+        if (!read(";")) {
+            node->cond = expr();
+            expect(";");
+        }
+
+        // if increment statement exists
+        if (!read(")")) {
+            node->inc = expr();
+            expect(")");
+        }
+
         node->then = stmt();
         return node;
     }

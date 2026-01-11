@@ -76,6 +76,22 @@ void gen_code(Node *node) {
         printf(".Lend%d:\n", seq_label);
         seq_label++;
         return;
+    case ND_FOR:
+        if (node->init)
+            gen_code(node->init);
+        printf(".Lbegin%d:\n", seq_label);
+        if (node->cond) {
+            gen_code(node->cond);
+            printf("    pop rax\n");
+            printf("    cmp rax, 0\n");
+            printf("    je .Lend%d\n", seq_label);
+        }
+        gen_code(node->then);
+        if (node->inc)
+            gen_code(node->inc);
+        printf("    jmp .Lbegin%d\n", seq_label);
+        printf(".Lend%d:\n", seq_label);
+        return;
     case ND_RETURN:
         gen_code(node->lhs);
         printf("    pop rax\n");

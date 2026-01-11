@@ -88,6 +88,7 @@ char *startwith_reserved(char *p) {
         "if",
         "else",
         "while",
+        "for",
         "return"
     };
 

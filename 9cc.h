@@ -45,6 +45,7 @@ typedef enum {
     ND_NUM, // integer
     ND_IF, // if
     ND_WHILE, // while
+    ND_FOR, // for
     ND_RETURN // return
 } NodeType;
 
@@ -58,9 +59,11 @@ struct Node {
     LVar *lvar; // variable (used if type == ND_LVAR)
     
     // conditional statement
-    Node *cond; // condition (expressed with expr)
-    Node *then;
-    Node *els; 
+    Node *cond; // condition
+    Node *then; // then
+    Node *els; // else
+    Node *init; // initializer
+    Node *inc; // increment
 };
 
 void error(char *fmt, ...);

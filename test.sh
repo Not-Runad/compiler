@@ -53,4 +53,7 @@ assert 0 'a = 5; b = 10; c = 15; if (a + b > c) return a + c - b; else return c 
 
 assert 10 'i = 0; while (i < 10) i = i + 1; return i;'
 
+assert 55 'i = 0; j = 0; for (i = 0; i <= 10; i = i + 1) j = i + j; return j;'
+assert 5 'for (;;) return 5; return 10;'
+
 printf "\nOK"
