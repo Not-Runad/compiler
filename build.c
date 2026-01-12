@@ -1,6 +1,14 @@
 #include "9cc.h"
 
 int seq_label = 1;
+char *arg_reg[] = {
+    "rdi",
+    "rsi",
+    "rdx",
+    "rcx",
+    "r8",
+    "r9"
+};
 
 void gen_addr(Node *node) {
     if (node->type != ND_VAR)
@@ -98,6 +106,17 @@ void gen_code(Node *node) {
             gen_code(n);
         return;
     case ND_FUNCALL:
+        // generate values and count args
+        int argc = 0;
+        for (Node *arg = node->args; arg; arg = arg->next) {
+            gen_code(arg);
+            argc++;
+        }
+
+        // set values to registers by following x86-64 ABI
+        for (int i = argc - 1; i >= 0; i--)
+            printf("    pop %s\n", arg_reg[i]);
+
         printf("    call %s\n", node->func_name);
         printf("    push rax\n");
         return;

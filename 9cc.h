@@ -76,6 +76,7 @@ struct Node {
 
     // function
     char *func_name; // function name
+    Node *args; // function args
 };
 
 void error(char *fmt, ...);

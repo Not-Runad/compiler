@@ -227,8 +227,26 @@ Node *unary() {
     return primary();
 }
 
+// args = "(" (assign ("," assign)*)? ")"
+Node *args() {
+    // no args
+    if (read(")"))
+        return NULL;
+    
+    // parse args
+    Node *head = assign();
+    Node *cur = head;
+    while (read(",")) {
+        cur->next = assign();
+        cur = cur->next;
+    }
+
+    expect(")");
+    return head;
+}
+
 // primary = "(" expr ")"
-//         | ident ("(" ")")?
+//         | ident args?
 //         | num
 Node *primary() {
     // "(" expr ")"
@@ -238,17 +256,18 @@ Node *primary() {
         return node;
     }
 
-    // ident ("(" ")")?
+    // ident args?
     Token *ident_token = read_ident();
     if (ident_token) {
-        // if identifier is a function
+        // function
         if (read("(")) {
-            expect(")");
             Node *node = new_node(ND_FUNCALL);
             node->func_name = strndup(ident_token->str, ident_token->len);
+            node->args = args();
             return node;
         }
         
+        // variable
         Var *var = find_lvar(ident_token);
         if (!var) { // not exist
             var = calloc(1, sizeof(Var));

@@ -5,6 +5,12 @@ gcc -xc -c -o tmp_func.o - <<EOF
 int foo() { return 12; }
 int bar() { return 34; }
 int baz() { return 56; }
+int add(int x, int y) { return x + y; }
+int sub(int x, int y) { return x - y; }
+
+int add_6args(int a, int b, int c, int d, int e, int f) {
+	return a + b + c + d + e + f;
+}
 EOF
 
 # assertion
@@ -72,10 +78,15 @@ assert 5 'for (;;) return 5; return 10;'
 # block
 assert 55 'i = 0; j = 0; while (i <= 10) { j = i + j; i = i + 1; } return j;'
 
-# zero-arity function (from tmp_func.o)
-assert '13' 'foo = 1; return foo + foo();'
-assert '36' 'bar = 2; return bar + bar();'
-assert '59' 'baz = 3; return baz + baz();'
+# zero-arity function
+assert 13 'foo = 1; return foo + foo();'
+assert 36 'bar = 2; return bar + bar();'
+assert 59 'baz = 3; return baz + baz();'
+
+# multi-arity function with up to 6 args
+assert 49 'foo = 1; bar = 2; return add(bar() + bar, foo() + foo);'
+assert 23 'foo = 1; bar = 2; return sub(bar() + bar, foo() + foo);'
+assert 21 'return add_6args(1, 2, 3, 4, 5, 6);'
 
 # all correct
-printf "\n\033[1;32m=== OK ===\033[0m"
+printf "\n\033[1;32m=== OK ===\033[0m\n"
