@@ -1,6 +1,6 @@
 #include "9cc.h"
 
-LVar *locals;
+Var *local_vars;
 
 Node *new_node(NodeType type) {
     Node *node = calloc(1, sizeof(Node));
@@ -21,17 +21,17 @@ Node *new_val(int val) {
     return node;
 }
 
-Node *new_lvar(LVar *lvar) {
+Node *new_lvar(Var *Var) {
     Node *node = new_node(ND_LVAR);
-    node->lvar = lvar;
+    node->var = Var;
     return node;
 }
 
-LVar *find_lvar(Token *token) {
-    for (LVar *lvar = locals; lvar; lvar = lvar->next) {
-        if (strlen(lvar->name) == token->len
-            && !memcmp(token->str, lvar->name, token->len))
-            return lvar;
+Var *find_lvar(Token *token) {
+    for (Var *Var = local_vars; Var; Var = Var->next) {
+        if (strlen(Var->name) == token->len
+            && !memcmp(token->str, Var->name, token->len))
+            return Var;
     }
     return NULL;
 }
@@ -249,16 +249,16 @@ Node *primary() {
             return node;
         }
         
-        LVar *lvar = find_lvar(ident_token);
-        if (!lvar) { // not exist
-            lvar = calloc(1, sizeof(LVar));
-            lvar->next = locals;
-            lvar->name = strndup(ident_token->str, ident_token->len);
-            // whether locals == NULL or not
-            lvar->offset = locals ? locals->offset + 8 : 8;
-            locals = lvar;
+        Var *var = find_lvar(ident_token);
+        if (!var) { // not exist
+            var = calloc(1, sizeof(Var));
+            var->next = local_vars;
+            var->name = strndup(ident_token->str, ident_token->len);
+            // whether local_vars == NULL or not
+            var->offset = local_vars ? local_vars->offset + 8 : 8;
+            local_vars = var;
         }
-        return new_lvar(lvar);
+        return new_lvar(var);
     }
 
     // parse num to value

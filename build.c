@@ -7,7 +7,7 @@ void gen_addr(Node *node) {
         error("not an left value");
     
     printf("    mov rax, rbp\n");
-    printf("    sub rax, %d\n", node->lvar->offset);
+    printf("    sub rax, %d\n", node->var->offset);
     printf("    push rax\n");
 }
 
@@ -162,7 +162,7 @@ void build(Node *node) {
 
     // allocate variables memory
     int allocate_size = 0;
-    for (LVar *var = locals; var; var = var->next)
+    for (Var *var = local_vars; var; var = var->next)
         allocate_size += 8;
     printf("    push rbp\n");
     printf("    mov rbp, rsp\n");

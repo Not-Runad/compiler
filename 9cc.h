@@ -6,9 +6,9 @@
 #include <string.h>
 
 // local variable type
-typedef struct LVar LVar;
-struct LVar {
-    LVar *next; // next variable or NULL
+typedef struct Var Var;
+struct Var {
+    Var *next; // next variable or NULL
     char *name; // variable name
     int offset; // offset from RBP
 };
@@ -62,7 +62,7 @@ struct Node {
     int val; // value (used if type == ND_NUM)
 
     // local variable
-    LVar *lvar; // variable (used if type == ND_LVAR)
+    Var *var; // variable (used if type == ND_LVAR)
     
     // conditional statement
     Node *cond; // condition
@@ -94,4 +94,4 @@ void build(Node *node);
 // global variables
 extern Token *current_token;
 extern char *user_input;
-extern LVar *locals;
+extern Var *local_vars;
