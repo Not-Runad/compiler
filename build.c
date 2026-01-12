@@ -113,12 +113,25 @@ void gen_code(Node *node) {
             argc++;
         }
 
-        // set values to registers by following x86-64 ABI
+        // set values to registers by following System V AMD64 ABI
         for (int i = argc - 1; i >= 0; i--)
             printf("    pop %s\n", arg_reg[i]);
 
+        // align RSP to a 16 byte boundary
+        printf("    mov rax, rsp\n");
+        printf("    and rax, 15\n");
+        printf("    jnz .Lcall%d\n", seq_label); // if RSP is NOT a 16 byte
+        printf("    xor rax, rax\n");
         printf("    call %s\n", node->func_name);
+        printf("    jmp .Lend%d\n", seq_label);
+        printf(".Lcall%d:\n", seq_label);
+        printf("    sub rsp, 8\n");
+        printf("    xor rax, rax\n");
+        printf("    call %s\n", node->func_name);
+        printf("    add rsp, 8\n");
+        printf(".Lend%d:\n", seq_label);
         printf("    push rax\n");
+        seq_label++;
         return;
     }
 
