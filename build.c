@@ -103,6 +103,10 @@ void gen_code(Node *node) {
         for (Node *n = node->stmts; n; n = n->next)
             gen_code(n);
         return;
+    case ND_FUNCALL:
+        printf("    call %s\n", node->func_name);
+        printf("    push rax\n");
+        return;
     }
 
     gen_code(node->lhs);

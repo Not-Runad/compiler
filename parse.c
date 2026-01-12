@@ -15,7 +15,7 @@ Node *new_binary(NodeType type, Node *lhs, Node *rhs) {
     return node;
 }
 
-Node *new_num(int val) {
+Node *new_val(int val) {
     Node *node = new_node(ND_NUM);
     node->val = val;
     return node;
@@ -223,11 +223,13 @@ Node *unary() {
     if (read("+"))
         return unary();
     if (read("-"))
-        return new_binary(ND_SUB, new_num(0), primary());
+        return new_binary(ND_SUB, new_val(0), primary());
     return primary();
 }
 
-// primary = "(" expr ")" | ident | num
+// primary = "(" expr ")"
+//         | ident ("(" ")")?
+//         | num
 Node *primary() {
     // "(" expr ")"
     if (read("(")) {
@@ -236,21 +238,29 @@ Node *primary() {
         return node;
     }
 
-    // ident
+    // ident ("(" ")")?
     Token *ident_token = read_ident();
     if (ident_token) {
+        // if identifier is a function
+        if (read("(")) {
+            expect(")");
+            Node *node = new_node(ND_FUNCALL);
+            node->func_name = strndup(ident_token->str, ident_token->len);
+            return node;
+        }
+        
         LVar *lvar = find_lvar(ident_token);
         if (!lvar) { // not exist
             lvar = calloc(1, sizeof(LVar));
             lvar->next = locals;
             lvar->name = strndup(ident_token->str, ident_token->len);
-            
+            // whether locals == NULL or not
             lvar->offset = locals ? locals->offset + 8 : 8;
             locals = lvar;
         }
         return new_lvar(lvar);
     }
 
-    // num
-    return new_num(get_number());
+    // parse num to value
+    return new_val(get_number());
 }

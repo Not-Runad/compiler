@@ -47,7 +47,8 @@ typedef enum {
     ND_WHILE, // while
     ND_FOR, // for
     ND_RETURN, // return
-    ND_BLOCK // block { ... }
+    ND_BLOCK, // block { ... }
+    ND_FUNCALL // call function
 } NodeType;
 
 typedef struct Node Node;
@@ -56,7 +57,11 @@ struct Node {
     Node *next; // next node
     Node *lhs; // left-hand side
     Node *rhs; // right-hand side
+
+    // number value
     int val; // value (used if type == ND_NUM)
+
+    // local variable
     LVar *lvar; // variable (used if type == ND_LVAR)
     
     // conditional statement
@@ -68,6 +73,9 @@ struct Node {
 
     // in block
     Node *stmts; // statements in block
+
+    // function
+    char *func_name; // function name
 };
 
 void error(char *fmt, ...);
