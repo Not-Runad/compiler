@@ -1,6 +1,6 @@
 #include "9cc.h"
 
-Var *local_vars;
+Var *var_list;
 
 Node *new_node(NodeType type) {
     Node *node = calloc(1, sizeof(Node));
@@ -21,14 +21,14 @@ Node *new_val(int val) {
     return node;
 }
 
-Node *new_lvar(Var *Var) {
-    Node *node = new_node(ND_LVAR);
+Node *new_var(Var *Var) {
+    Node *node = new_node(ND_VAR);
     node->var = Var;
     return node;
 }
 
 Var *find_lvar(Token *token) {
-    for (Var *Var = local_vars; Var; Var = Var->next) {
+    for (Var *Var = var_list; Var; Var = Var->next) {
         if (strlen(Var->name) == token->len
             && !memcmp(token->str, Var->name, token->len))
             return Var;
@@ -252,13 +252,13 @@ Node *primary() {
         Var *var = find_lvar(ident_token);
         if (!var) { // not exist
             var = calloc(1, sizeof(Var));
-            var->next = local_vars;
+            var->next = var_list;
             var->name = strndup(ident_token->str, ident_token->len);
-            // whether local_vars == NULL or not
-            var->offset = local_vars ? local_vars->offset + 8 : 8;
-            local_vars = var;
+            // whether var_list == NULL or not
+            var->offset = var_list ? var_list->offset + 8 : 8;
+            var_list = var;
         }
-        return new_lvar(var);
+        return new_var(var);
     }
 
     // parse num to value

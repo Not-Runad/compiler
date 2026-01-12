@@ -41,7 +41,7 @@ typedef enum {
     ND_LT, // <
     ND_LE, // <=
     ND_ASSIGN, // =
-    ND_LVAR, // local variable
+    ND_VAR, // local variable
     ND_NUM, // integer
     ND_IF, // if
     ND_WHILE, // while
@@ -62,7 +62,7 @@ struct Node {
     int val; // value (used if type == ND_NUM)
 
     // local variable
-    Var *var; // variable (used if type == ND_LVAR)
+    Var *var; // variable (used if type == ND_VAR)
     
     // conditional statement
     Node *cond; // condition
@@ -94,4 +94,4 @@ void build(Node *node);
 // global variables
 extern Token *current_token;
 extern char *user_input;
-extern Var *local_vars;
+extern Var *var_list;

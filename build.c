@@ -3,18 +3,12 @@
 int seq_label = 1;
 
 void gen_addr(Node *node) {
-    if (node->type != ND_LVAR)
+    if (node->type != ND_VAR)
         error("not an left value");
     
     printf("    mov rax, rbp\n");
     printf("    sub rax, %d\n", node->var->offset);
     printf("    push rax\n");
-}
-
-void gen_num(Node *node) {
-    if (node->type != ND_NUM)
-        error("not a number");
-    printf("    push %d\n", node->val);
 }
 
 void load() {
@@ -35,7 +29,7 @@ void gen_code(Node *node) {
     case ND_NUM:
         printf("    push %d\n", node->val);
         return;
-    case ND_LVAR:
+    case ND_VAR:
         gen_addr(node);
         load();
         return;
@@ -160,9 +154,10 @@ void build(Node *node) {
     printf(".globl main\n");
     printf("main:\n");
 
+    // initialize
     // allocate variables memory
     int allocate_size = 0;
-    for (Var *var = local_vars; var; var = var->next)
+    for (Var *var = var_list; var; var = var->next)
         allocate_size += 8;
     printf("    push rbp\n");
     printf("    mov rbp, rsp\n");
@@ -171,12 +166,12 @@ void build(Node *node) {
     // generate code
     for (Node *n = node; n; n = n->next) {
         gen_code(n);
-        // a value of expr result is left, so pop it to prevent an stack-overflow
+        // expr result is left, so pop it to prevent an stack-overflow
         printf("    pop rax\n");
     }
 
     // epilogue
-    // last expr result on rax is return value
+    // last expr result in rax is return value
     printf("    mov rsp, rbp\n");
     printf("    pop rbp\n");
     printf("    ret\n");
