@@ -55,6 +55,15 @@ void expect(char *op) {
     current_token = current_token->next;
 }
 
+// get identifier
+char *get_ident() {
+    if (current_token->type != TK_IDENT)
+        error_at(current_token->str, "expected an identifier");
+    char *ident = strndup(current_token->str, current_token->len);
+    current_token = current_token->next;
+    return ident;
+}
+
 // get number
 int get_number() {
     if (current_token->type != TK_NUM)

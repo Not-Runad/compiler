@@ -79,20 +79,29 @@ struct Node {
     Node *args; // function args
 };
 
+typedef struct Function Function;
+struct Function {
+    Function *next; // next function
+    char *name; // function name
+    Var *var_list; // varible list
+    Node *node; // node in function
+};
+
+
 void error(char *fmt, ...);
 void error_at(char *loc, char *fmt, ...);
 bool read(char *op);
 Token *read_ident();
 void expect(char *op);
+char *get_ident();
 int get_number();
 bool at_eof();
 
-Node *program();
+Function *program();
 
 Token *tokenizer();
-void build(Node *node);
+void build(Function *program);
 
 // global variables
 extern Token *current_token;
 extern char *user_input;
-extern Var *var_list;

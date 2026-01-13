@@ -1,6 +1,6 @@
 #include "9cc.h"
 
-int seq_label = 1;
+int seq_label = 0;
 char *arg_reg[] = {
     "rdi",
     "rsi",
@@ -9,6 +9,7 @@ char *arg_reg[] = {
     "r8",
     "r9"
 };
+Function *current_fn;
 
 void gen_addr(Node *node) {
     if (node->type != ND_VAR)
@@ -97,9 +98,10 @@ void gen_code(Node *node) {
     case ND_RETURN:
         gen_code(node->lhs);
         printf("    pop rax\n");
-        printf("    mov rsp, rbp\n");
-        printf("    pop rbp\n");
-        printf("    ret\n");
+        // printf("    mov rsp, rbp\n");
+        // printf("    pop rbp\n");
+        // printf("    ret\n");
+        printf("    jmp .Lreturn.%s\n", current_fn->name);
         return;
     case ND_BLOCK:
         for (Node *n = node->stmts; n; n = n->next)
@@ -180,31 +182,36 @@ void gen_code(Node *node) {
     printf("    push rax\n");
 }
 
-void build(Node *node) {
-    // prologue
+void build(Function *program) {
+    // prefix
     printf(".intel_syntax noprefix\n");
-    printf(".globl main\n");
-    printf("main:\n");
 
-    // initialize
-    // allocate variables memory
-    int allocate_size = 0;
-    for (Var *var = var_list; var; var = var->next)
-        allocate_size += 8;
-    printf("    push rbp\n");
-    printf("    mov rbp, rsp\n");
-    printf("    sub rsp, %d\n", allocate_size);
+    for (Function *fn = program; fn; fn = fn->next) {
+        current_fn = fn;
 
-    // generate code
-    for (Node *n = node; n; n = n->next) {
-        gen_code(n);
-        // expr result is left, so pop it to prevent an stack-overflow
-        printf("    pop rax\n");
+        // function declare
+        printf(".global %s\n", fn->name);
+        printf("%s:\n", fn->name);
+
+        // allocate variables memory
+        int allocate_size = 0;
+        for (Var *var = fn->var_list; var; var = var->next)
+            allocate_size += 8;
+        printf("    push rbp\n");
+        printf("    mov rbp, rsp\n");
+        printf("    sub rsp, %d\n", allocate_size);
+
+        // emit code
+        for (Node *n = fn->node; n; n = n->next) {
+            gen_code(n);
+            // expr result is left, so pop it to prevent an stack-overflow
+            printf("    pop rax\n");
+        }
+
+        // epilogue
+        printf(".Lreturn.%s:\n", current_fn->name);
+        printf("    mov rsp, rbp\n");
+        printf("    pop rbp\n");
+        printf("    ret\n");
     }
-
-    // epilogue
-    // last expr result in rax is return value
-    printf("    mov rsp, rbp\n");
-    printf("    pop rbp\n");
-    printf("    ret\n");
 }

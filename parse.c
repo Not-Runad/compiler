@@ -27,6 +27,14 @@ Node *new_var(Var *Var) {
     return node;
 }
 
+Function *new_fn(char *fn_name, Node *node, Var *var_list) {
+    Function *fn = calloc(1, sizeof(Function));
+    fn->name = fn_name;
+    fn->node = node;
+    fn->var_list = var_list;
+    return fn;
+}
+
 Var *find_lvar(Token *token) {
     for (Var *Var = var_list; Var; Var = Var->next) {
         if (strlen(Var->name) == token->len
@@ -36,6 +44,7 @@ Var *find_lvar(Token *token) {
     return NULL;
 }
 
+Function *function();
 Node *stmt();
 Node *expr();
 Node *assign();
@@ -46,17 +55,38 @@ Node *mul();
 Node *unary();
 Node *primary();
 
-// program = stmt*
-Node *program() {
+// program = function*
+Function *program() {
+    Function head;
+    head.next = NULL;
+    Function *cur = &head;
+
+    while (!at_eof()) {
+        cur->next = function();
+        cur = cur->next;
+    }
+    return head.next;
+}
+
+// function = ident "("  ")" "{" stmt* "}"
+Function *function() {
+    var_list = NULL;
+    char *ident = get_ident();
+    expect("(");
+    expect(")");
+    expect("{");
+
     Node head;
     head.next = NULL;
     Node *cur = &head;
 
-    while (!at_eof()) {
+    while (!read("}")) {
         cur->next = stmt();
         cur = cur->next;
     }
-    return head.next;
+
+    Function *fn = new_fn(ident, head.next, var_list);
+    return fn;
 }
 
 // stmt =  expr ";"
