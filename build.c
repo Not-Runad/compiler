@@ -11,26 +11,48 @@ char *arg_reg[] = {
 };
 Function *current_fn;
 
-void gen_addr(Node *node) {
-    if (node->type != ND_VAR)
-        error("not an left value");
-    
-    printf("    mov rax, rbp\n");
-    printf("    sub rax, %d\n", node->var->offset);
-    printf("    push rax\n");
+// allocate variables memory
+void allocate_memory(Function *fn) {
+    int allocate_size = 0;
+    for (VarList *vl = fn->var_list; vl; vl = vl->next) {
+        allocate_size += 8;
+        vl->var->offset = allocate_size;
+    }
+    printf("    push rbp\n");
+    printf("    mov rbp, rsp\n");
+    printf("    sub rsp, %d\n", allocate_size);
 }
 
-void load() {
+// push arguments to stack
+void load_args(Function *fn) {
+    int i = 0;
+    for (VarList *params = fn->params; params; params = params->next) {
+        Var *var = params->var;
+        printf("    mov [rbp-%d], %s\n", var->offset, arg_reg[i++]);
+    }
+}
+
+// load variable
+void load_var() {
     printf("    pop rax\n");
     printf("    mov rax, [rax]\n");
     printf("    push rax\n");
 }
 
-void store() {
+// store variable
+void store_var() {
     printf("    pop rdi\n");
     printf("    pop rax\n");
     printf("    mov [rax], rdi\n");
     printf("    push rdi\n");
+}
+
+void gen_addr(Node *node) {
+    if (node->type != ND_VAR)
+        error("not an left value");
+    
+    printf("    lea rax, [rbp-%d]\n", node->var->offset);
+    printf("    push rax\n");
 }
 
 void gen_code(Node *node) {
@@ -40,12 +62,12 @@ void gen_code(Node *node) {
         return;
     case ND_VAR:
         gen_addr(node);
-        load();
+        load_var();
         return;
     case ND_ASSIGN:
         gen_addr(node->lhs);
         gen_code(node->rhs);
-        store();
+        store_var();
         return;
     case ND_IF:
         if (node->els) {
@@ -98,9 +120,6 @@ void gen_code(Node *node) {
     case ND_RETURN:
         gen_code(node->lhs);
         printf("    pop rax\n");
-        // printf("    mov rsp, rbp\n");
-        // printf("    pop rbp\n");
-        // printf("    ret\n");
         printf("    jmp .Lreturn.%s\n", current_fn->name);
         return;
     case ND_BLOCK:
@@ -124,12 +143,12 @@ void gen_code(Node *node) {
         printf("    and rax, 15\n");
         printf("    jnz .Lcall%d\n", seq_label); // if RSP is NOT a 16 byte
         printf("    xor rax, rax\n");
-        printf("    call %s\n", node->func_name);
+        printf("    call %s\n", node->fn_name);
         printf("    jmp .Lend%d\n", seq_label);
         printf(".Lcall%d:\n", seq_label);
         printf("    sub rsp, 8\n");
         printf("    xor rax, rax\n");
-        printf("    call %s\n", node->func_name);
+        printf("    call %s\n", node->fn_name);
         printf("    add rsp, 8\n");
         printf(".Lend%d:\n", seq_label);
         printf("    push rax\n");
@@ -192,21 +211,12 @@ void build(Function *program) {
         // function declare
         printf(".global %s\n", fn->name);
         printf("%s:\n", fn->name);
-
-        // allocate variables memory
-        int allocate_size = 0;
-        for (Var *var = fn->var_list; var; var = var->next)
-            allocate_size += 8;
-        printf("    push rbp\n");
-        printf("    mov rbp, rsp\n");
-        printf("    sub rsp, %d\n", allocate_size);
+        allocate_memory(fn);
+        load_args(fn);
 
         // emit code
-        for (Node *n = fn->node; n; n = n->next) {
+        for (Node *n = fn->node; n; n = n->next)
             gen_code(n);
-            // expr result is left, so pop it to prevent an stack-overflow
-            printf("    pop rax\n");
-        }
 
         // epilogue
         printf(".Lreturn.%s:\n", current_fn->name);

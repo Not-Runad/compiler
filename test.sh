@@ -85,7 +85,12 @@ assert 2 'main() { foo = 1; bar = 2; return sub(foo + bar, bar - foo); }'
 assert 21 'main() { return add_6args(1, 2, 3, 4, 5, 6); }'
 
 # zero-arity function declare
-assert 13 'ret12() { return 12; } main() { ret12 = 1; return ret12 + ret12(); }'
+assert 13 'main() { ret12 = 1; return ret12 + ret12(); } ret12() { return 12; }'
+
+# multi-arity function declare
+assert 10 'main() { return myadd(3, 7); } myadd(a, b) { return a + b; }'
+assert 4 'main() { return mysub(7, 3); } mysub(a, b) { return a - b; }'
+assert 55 'main() { return fib(9); } fib(x) { if (x <= 1) return 1; return fib(x - 1) + fib(x - 2); }'
 
 # all correct
 printf "\n\033[1;32m=== OK ===\033[0m\n"

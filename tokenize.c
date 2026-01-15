@@ -27,7 +27,7 @@ void error_at(char *loc, char *fmt, ...) {
 }
 
 // read next token
-bool read(char *op) {
+bool read_next_token(char *op) {
     // if next token is not expected symbol
     if (current_token->type != TK_RESERVED
         || strlen(op) != current_token->len
@@ -37,7 +37,8 @@ bool read(char *op) {
     return true;
 }
 
-Token *read_ident() {
+// read next identifier
+Token *read_next_ident() {
     if (current_token->type != TK_IDENT)
         return NULL;
     Token *before_token = current_token;

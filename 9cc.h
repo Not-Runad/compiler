@@ -8,10 +8,16 @@
 // local variable type
 typedef struct Var Var;
 struct Var {
-    Var *next; // next variable or NULL
     char *name; // variable name
     int offset; // offset from RBP
 };
+
+typedef struct VarList VarList;
+struct VarList {
+    VarList *next;
+    Var *var;
+};
+
 
 // token type
 typedef enum {
@@ -75,7 +81,7 @@ struct Node {
     Node *stmts; // statements in block
 
     // function
-    char *func_name; // function name
+    char *fn_name; // function name
     Node *args; // function args
 };
 
@@ -83,15 +89,16 @@ typedef struct Function Function;
 struct Function {
     Function *next; // next function
     char *name; // function name
-    Var *var_list; // varible list
+    VarList *params; // function params
+    VarList *var_list; // varible list
     Node *node; // node in function
 };
 
 
 void error(char *fmt, ...);
 void error_at(char *loc, char *fmt, ...);
-bool read(char *op);
-Token *read_ident();
+bool read_next_token(char *op);
+Token *read_next_ident();
 void expect(char *op);
 char *get_ident();
 int get_number();

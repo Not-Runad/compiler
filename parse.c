@@ -1,6 +1,6 @@
 #include "9cc.h"
 
-Var *var_list;
+VarList *var_list;
 
 Node *new_node(NodeType type) {
     Node *node = calloc(1, sizeof(Node));
@@ -15,33 +15,68 @@ Node *new_binary(NodeType type, Node *lhs, Node *rhs) {
     return node;
 }
 
-Node *new_val(int val) {
+Node *new_val_node(int val) {
     Node *node = new_node(ND_NUM);
     node->val = val;
     return node;
 }
 
-Node *new_var(Var *Var) {
+Node *new_var_node(Var *Var) {
     Node *node = new_node(ND_VAR);
     node->var = Var;
     return node;
 }
 
-Function *new_fn(char *fn_name, Node *node, Var *var_list) {
+Function *new_fn(char *fn_name, Node *node, VarList *params, VarList *var_list) {
     Function *fn = calloc(1, sizeof(Function));
     fn->name = fn_name;
     fn->node = node;
+    fn->params = params;
     fn->var_list = var_list;
     return fn;
 }
 
-Var *find_lvar(Token *token) {
-    for (Var *Var = var_list; Var; Var = Var->next) {
-        if (strlen(Var->name) == token->len
-            && !memcmp(token->str, Var->name, token->len))
-            return Var;
+// append var to var_list
+void *append_var(Var *var) {
+    VarList *vl = calloc(1, sizeof(VarList));
+    vl->var = var;
+    vl->next = var_list;
+    var_list = vl;
+}
+
+// get new var
+Var *new_var(char *name) {
+    Var *var = calloc(1, sizeof(Var));
+    var->name = name;
+    append_var(var);
+    return var;
+}
+
+Var *find_var(Token *token) {
+    for (VarList *vl = var_list; vl; vl = vl->next) {
+        Var *var = vl->var;
+        if (strlen(var->name) == token->len
+            && !memcmp(token->str, var->name, token->len))
+            return var;
     }
     return NULL;
+}
+
+VarList *read_fn_param() {
+    // no param
+    if (read_next_token(")"))
+        return NULL;
+    
+    VarList *head = calloc(1, sizeof(VarList));
+    head->var = new_var(get_ident());
+    VarList *cur = head;
+    while (!read_next_token(")")) {
+        expect(",");
+        cur->next = calloc(1, sizeof(VarList));
+        cur->next->var = new_var(get_ident());
+        cur = cur->next;
+    }
+    return head;
 }
 
 Function *function();
@@ -68,24 +103,26 @@ Function *program() {
     return head.next;
 }
 
-// function = ident "("  ")" "{" stmt* "}"
+// function = ident "(" params? ")" "{" stmt* "}"
+// params = ident ("," ident)*
 Function *function() {
     var_list = NULL;
     char *ident = get_ident();
     expect("(");
-    expect(")");
+    VarList *params = read_fn_param();
+
     expect("{");
 
     Node head;
     head.next = NULL;
     Node *cur = &head;
 
-    while (!read("}")) {
+    while (!read_next_token("}")) {
         cur->next = stmt();
         cur = cur->next;
     }
 
-    Function *fn = new_fn(ident, head.next, var_list);
+    Function *fn = new_fn(ident, head.next, params, var_list);
     return fn;
 }
 
@@ -99,26 +136,26 @@ Node *stmt() {
     Node *node;
 
     // return statement
-    if (read("return")) {
+    if (read_next_token("return")) {
         node = new_binary(ND_RETURN, expr(), NULL);
         expect(";");
         return node;
     }
 
     // if-else statement
-    if (read("if")) {
+    if (read_next_token("if")) {
         Node *node = new_node(ND_IF);
         expect("(");
         node->cond = expr();
         expect(")");
         node->then = stmt();
-        if (read("else"))
+        if (read_next_token("else"))
             node->els = stmt();
         return node;
     }
 
     // while statement
-    if (read("while")) {
+    if (read_next_token("while")) {
         Node *node = new_node(ND_WHILE);
         expect("(");
         node->cond = expr();
@@ -128,24 +165,24 @@ Node *stmt() {
     }
 
     // for statement
-    if (read("for")) {
+    if (read_next_token("for")) {
         Node *node = new_node(ND_FOR);
         expect("(");
 
         // if initialize statement exists
-        if (!read(";")) {
+        if (!read_next_token(";")) {
             node->init = expr();
             expect(";");
         }
 
         // if conditional statement exists
-        if (!read(";")) {
+        if (!read_next_token(";")) {
             node->cond = expr();
             expect(";");
         }
 
         // if increment statement exists
-        if (!read(")")) {
+        if (!read_next_token(")")) {
             node->inc = expr();
             expect(")");
         }
@@ -155,12 +192,12 @@ Node *stmt() {
     }
 
     // block
-    if (read("{")) {
+    if (read_next_token("{")) {
         Node head;
         head.next = NULL;
         Node *cur = &head;
 
-        while (!read("}")) {
+        while (!read_next_token("}")) {
             cur->next = stmt();
             cur = cur->next;
         }
@@ -183,7 +220,7 @@ Node *expr() {
 // assign = equarity ("=" assign)?
 Node *assign() {
     Node *node = equality();
-    if (read("="))
+    if (read_next_token("="))
         return new_binary(ND_ASSIGN, node, assign());
     return node;
 }
@@ -193,9 +230,9 @@ Node *equality() {
     Node *node = relational();
 
     while (1) {
-        if (read("=="))
+        if (read_next_token("=="))
             node = new_binary(ND_EQ, node, relational());
-        else if (read("!="))
+        else if (read_next_token("!="))
             node = new_binary(ND_NE, node, relational());
         else
             return node;
@@ -207,13 +244,13 @@ Node *relational() {
     Node *node = add();
 
     while (1) {
-        if (read("<"))
+        if (read_next_token("<"))
             node = new_binary(ND_LT, node, add());
-        else if (read("<="))
+        else if (read_next_token("<="))
             node = new_binary(ND_LE, node, add());
-        else if (read(">"))
+        else if (read_next_token(">"))
             node = new_binary(ND_LT, add(), node);
-        else if (read(">="))
+        else if (read_next_token(">="))
             node = new_binary(ND_LE, add(), node);
         else
             return node;
@@ -225,9 +262,9 @@ Node *add() {
     Node *node = mul();
 
     while (1) {
-        if (read("+"))
+        if (read_next_token("+"))
             node = new_binary(ND_ADD, node, mul());
-        else if (read("-"))
+        else if (read_next_token("-"))
             node = new_binary(ND_SUB, node, mul());
         else
             return node;
@@ -239,9 +276,9 @@ Node *mul() {
     Node *node = unary();
     
     while (1) {
-        if (read("*"))
+        if (read_next_token("*"))
             node = new_binary(ND_MUL, node, unary());
-        else if (read("/"))
+        else if (read_next_token("/"))
             node = new_binary(ND_DIV, node, unary());
         else
             return node;
@@ -250,23 +287,23 @@ Node *mul() {
 
 // unary = ("+" | "-")? primary
 Node *unary() {
-    if (read("+"))
+    if (read_next_token("+"))
         return unary();
-    if (read("-"))
-        return new_binary(ND_SUB, new_val(0), primary());
+    if (read_next_token("-"))
+        return new_binary(ND_SUB, new_val_node(0), primary());
     return primary();
 }
 
 // args = "(" (assign ("," assign)*)? ")"
 Node *args() {
     // no args
-    if (read(")"))
+    if (read_next_token(")"))
         return NULL;
     
     // parse args
     Node *head = assign();
     Node *cur = head;
-    while (read(",")) {
+    while (read_next_token(",")) {
         cur->next = assign();
         cur = cur->next;
     }
@@ -280,36 +317,37 @@ Node *args() {
 //         | num
 Node *primary() {
     // "(" expr ")"
-    if (read("(")) {
+    if (read_next_token("(")) {
         Node *node = expr();
         expect(")");
         return node;
     }
 
     // ident args?
-    Token *ident_token = read_ident();
+    Token *ident_token = read_next_ident();
     if (ident_token) {
         // function
-        if (read("(")) {
+        if (read_next_token("(")) {
             Node *node = new_node(ND_FUNCALL);
-            node->func_name = strndup(ident_token->str, ident_token->len);
+            node->fn_name = strndup(ident_token->str, ident_token->len);
             node->args = args();
             return node;
         }
         
         // variable
-        Var *var = find_lvar(ident_token);
+        Var *var = find_var(ident_token);
         if (!var) { // not exist
-            var = calloc(1, sizeof(Var));
-            var->next = var_list;
-            var->name = strndup(ident_token->str, ident_token->len);
-            // whether var_list == NULL or not
-            var->offset = var_list ? var_list->offset + 8 : 8;
-            var_list = var;
+            char *ident = strndup(ident_token->str, ident_token->len);
+            var = new_var(ident);
+            // // whether var_list == NULL or not
+            // var->offset = var_list ? var_list->var->offset + 8 : 8;
+            // var_list = var;
+            var = new_var(ident);
+            return new_var_node(var);
         }
-        return new_var(var);
+        return new_var_node(var);
     }
 
     // parse num to value
-    return new_val(get_number());
+    return new_val_node(get_number());
 }
