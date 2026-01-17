@@ -5,11 +5,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-// local variable type
+// Local variable type
 typedef struct Var Var;
 struct Var {
-    char *name; // variable name
-    int offset; // offset from RBP
+    char *name; // Variable name
+    int offset; // Offset from RBP
 };
 
 typedef struct VarList VarList;
@@ -18,25 +18,24 @@ struct VarList {
     Var *var;
 };
 
-
-// token type
+// Token pattern
 typedef enum {
-    TK_RESERVED, // symbol
-    TK_IDENT, // indentifier
-    TK_NUM, // integer
+    TK_RESERVED, // Symbol
+    TK_IDENT, // Indentifier
+    TK_NUM, // Integer
     TK_EOF // EOF
-} TokenType;
+} TokenPattern;
 
 typedef struct Token Token;
 struct Token {
-    TokenType type; // token type
-    Token *next; // next token
-    int val; // the value of number
-    char *str; // token string
-    int len; // token length
+    TokenPattern pattern; // Token pattern
+    Token *next; // Next token
+    int val; // Value of number
+    char *str; // Token string
+    int len; // Token length
 };
 
-// node type
+// Node pattern
 typedef enum {
     ND_ADD, // +
     ND_SUB, // -
@@ -47,53 +46,53 @@ typedef enum {
     ND_LT, // <
     ND_LE, // <=
     ND_ASSIGN, // =
-    ND_ADDR, // address &
-    ND_DEREF, // dereference *
-    ND_VAR, // local variable
-    ND_NUM, // integer
+    ND_ADDR, // Address &
+    ND_DEREF, // Dereference *
+    ND_VAR, // Local variable
+    ND_NUM, // Integer
     ND_IF, // if
     ND_WHILE, // while
     ND_FOR, // for
     ND_RETURN, // return
-    ND_BLOCK, // block { ... }
-    ND_FUNCALL, // call function
-} NodeType;
+    ND_BLOCK, // Block { ... }
+    ND_FUNCALL, // Call function
+} NodePattern;
 
 typedef struct Node Node;
 struct Node {
-    NodeType type; // node type
-    Node *next; // next node
-    Node *lhs; // left-hand side
-    Node *rhs; // right-hand side
+    NodePattern pattern; // Node pattern
+    Node *next; // Next node
+    Node *lhs; // Left-hand side
+    Node *rhs; // Right-hand side
 
-    // number value
-    int val; // value (used if type == ND_NUM)
+    // Number value
+    int val; // Value (used if type == ND_NUM)
 
-    // local variable
-    Var *var; // variable (used if type == ND_VAR)
+    // Local variable
+    Var *var; // Variable (used if type == ND_VAR)
     
     // conditional statement
-    Node *cond; // condition
-    Node *then; // then
-    Node *els; // else
-    Node *init; // initializer
-    Node *inc; // increment
+    Node *cond; // Condition
+    Node *then; // Then
+    Node *els; // Else
+    Node *init; // Initializer
+    Node *inc; // Increment
 
-    // in block
-    Node *stmts; // statements in block
+    // In block
+    Node *stmts; // Statements in block
 
-    // function
-    char *fn_name; // function name
-    Node *args; // function args
+    // Function
+    char *fn_name; // Function name
+    Node *args; // Function args
 };
 
 typedef struct Function Function;
 struct Function {
-    Function *next; // next function
-    char *name; // function name
-    VarList *params; // function params
-    VarList *var_list; // varible list
-    Node *node; // node in function
+    Function *next; // Next function
+    char *name; // Function name
+    VarList *params; // Function params
+    VarList *var_list; // Varible list
+    Node *node; // Node in function
 };
 
 
@@ -111,6 +110,6 @@ Function *program();
 Token *tokenizer();
 void build(Function *program);
 
-// global variables
+// Global variables
 extern Token *current_token;
 extern char *user_input;

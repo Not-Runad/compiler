@@ -29,7 +29,7 @@ void error_at(char *loc, char *fmt, ...) {
 // read next token
 bool read_next_token(char *op) {
     // if next token is not expected symbol
-    if (current_token->type != TK_RESERVED
+    if (current_token->pattern != TK_RESERVED
         || strlen(op) != current_token->len
         || memcmp(current_token->str, op, current_token->len))
         return false;
@@ -39,7 +39,7 @@ bool read_next_token(char *op) {
 
 // read next identifier
 Token *read_next_ident() {
-    if (current_token->type != TK_IDENT)
+    if (current_token->pattern != TK_IDENT)
         return NULL;
     Token *before_token = current_token;
     current_token = current_token->next;
@@ -49,7 +49,7 @@ Token *read_next_ident() {
 // expect next token
 void expect(char *op) {
     // if next token is not expected symbol
-    if (current_token->type != TK_RESERVED
+    if (current_token->pattern != TK_RESERVED
         || strlen(op) != current_token->len
         || memcmp(current_token->str, op, current_token->len))
         error_at(current_token->str, "expected \"%s\"", op);
@@ -58,7 +58,7 @@ void expect(char *op) {
 
 // get identifier
 char *get_ident() {
-    if (current_token->type != TK_IDENT)
+    if (current_token->pattern != TK_IDENT)
         error_at(current_token->str, "expected an identifier");
     char *ident = strndup(current_token->str, current_token->len);
     current_token = current_token->next;
@@ -67,7 +67,7 @@ char *get_ident() {
 
 // get number
 int get_number() {
-    if (current_token->type != TK_NUM)
+    if (current_token->pattern != TK_NUM)
         error_at(current_token->str, "expected a number");
     int val = current_token->val;
     current_token = current_token->next;
@@ -75,7 +75,7 @@ int get_number() {
 }
 
 bool at_eof() {
-    return current_token->type == TK_EOF;
+    return current_token->pattern == TK_EOF;
 }
 
 bool is_alpha(char c) {
@@ -127,9 +127,9 @@ char *startwith_reserved(char *p) {
     return NULL;
 }
 
-Token *new_token(TokenType type, Token *cur, char *str, int len) {
+Token *new_token(TokenPattern pattern, Token *cur, char *str, int len) {
     Token *token = calloc(1, sizeof(Token));
-    token->type = type;
+    token->pattern = pattern;
     token->str = str;
     token->len = len;
     cur->next = token;

@@ -50,7 +50,7 @@ void store_var() {
 }
 
 void gen_addr(Node *node) {
-    switch (node->type) {
+    switch (node->pattern) {
     case ND_VAR:
         printf("    lea rax, [rbp-%d]\n", node->var->offset);
         printf("    push rax\n");
@@ -63,7 +63,7 @@ void gen_addr(Node *node) {
 }
 
 void gen_code(Node *node) {
-    switch (node->type) {
+    switch (node->pattern) {
     case ND_NUM:
         printf("    push %d\n", node->val);
         return;
@@ -176,7 +176,7 @@ void gen_code(Node *node) {
     printf("    pop rdi\n");
     printf("    pop rax\n");
 
-    switch (node->type) {
+    switch (node->pattern) {
     case ND_ADD:
         printf("    add rax, rdi\n");
         break;

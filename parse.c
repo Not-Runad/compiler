@@ -2,14 +2,14 @@
 
 VarList *var_list;
 
-Node *new_node(NodeType type) {
+Node *new_node(NodePattern pattern) {
     Node *node = calloc(1, sizeof(Node));
-    node->type = type;
+    node->pattern = pattern;
     return node;
 }
 
-Node *new_binary(NodeType type, Node *lhs, Node *rhs) {
-    Node *node = new_node(type);
+Node *new_binary(NodePattern pattern, Node *lhs, Node *rhs) {
+    Node *node = new_node(pattern);
     node->lhs = lhs;
     node->rhs = rhs;
     return node;
