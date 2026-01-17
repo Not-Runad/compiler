@@ -30,67 +30,75 @@ assert() {
 }
 
 # four arithmetic operation
-assert 42 'main() { return 42; }'
-assert 41 'main() { return  12 + 34 - 5; }'
-assert 15 'main() { return 5 * (9 - 6); }'
-assert 4 'main() { return (3 + 5) / 2; }'
-assert 5 'main() { return -3 * +5 + +20; }'
+assert 42 'main() {return 42;}'
+assert 41 'main() {return  12+34-5;}'
+assert 15 'main() {return 5*(9-6);}'
+assert 4 'main() {return (3+5)/2;}'
+assert 5 'main() {return -3*+5++20;}'
 
 # condition
-assert 0 'main() { return 0 == 1; }'
-assert 1 'main() { return 42 == 42; }'
-assert 1 'main() { return 0 != 1; }'
-assert 0 'main() { return 42 != 42; }'
+assert 0 'main() {return 0==1;}'
+assert 1 'main() {return 42==42;}'
+assert 1 'main() {return 0!=1;}'
+assert 0 'main() {return 42!=42;}'
 
-assert 1 'main() { return 0 < 1; }'
-assert 0 'main() { return 1 < 1; }'
+assert 1 'main() {return 0<1;}'
+assert 0 'main() {return 1<1;}'
 
-assert 1 'main() { return 0 <= 1; }'
-assert 1 'main() { return 1 <= 1; }'
-assert 0 'main() { return 2 <= 1; }'
+assert 1 'main() {return 0<=1;}'
+assert 1 'main() {return 1<=1;}'
+assert 0 'main() {return 2<=1;}'
 
-assert 0 'main() { return 0 > 1; }'
-assert 0 'main() { return 1 > 1; }'
+assert 0 'main() {return 0>1;}'
+assert 0 'main() {return 1>1;}'
 
-assert 0 'main() { return 0 >= 1; }'
-assert 1 'main() { return 1 >= 1; }'
-assert 1 'main() { return 2 >= 1; }'
+assert 0 'main() {return 0>=1;}'
+assert 1 'main() {return 1>=1;}'
+assert 1 'main() {return 2>=1;}'
 
 # identifier
-assert 0 'main() { foo = bar = 3; return -foo + +bar; }'
+assert 0 'main() {foo=bar=3; return -foo++bar;}'
 
 # return
-assert 2 'main() { 1; return 2; 3; }'
+assert 2 'main() {1;return 2;3;}'
 
 # if-else
-assert 5 'main() { a = 5; b = 10; if (a > b) return a - b; else return b - a; }'
-assert 0 'main() { a = 5; b = 10; c = 15; if (a + b > c) return a + c - b; else return c - (a + b); }'
+assert 5 'main() {a=5; b=10; if (a>b) return a-b; else return b-a;}'
+assert 0 'main() {a=5; b=10; c=15; if (a+b>c) return a+c-b; else return c-(a+b);}'
 
 # while
-assert 10 'main() { i = 0; while (i < 10) i = i + 1; return i; }'
+assert 10 'main() {i=0; while(i<10) i=i+1; return i;}'
 
 # for
-assert 55 'main() { i = 0; j = 0; for (i = 0; i <= 10; i = i + 1) j = i + j; return j; }'
-assert 5 'main() { for (;;) return 5; return 10; }'
+assert 55 'main() {i=0; j=0; for (i=0; i<=10; i=i+1) j=i+j; return j;}'
+assert 5 'main() {for (;;) return 5; return 10;}'
 
 # block
-assert 55 'main() { i = 0; j = 0; while (i <= 10) { j = i + j; i = i + 1; } return j; }'
+assert 55 'main() {i=0; j=0; while (i<=10) {j=i+j; i=i+1;} return j;}'
 
 # zero-arity function
-assert 13 'main() { foo = 1; return foo + foo(); }'
+assert 13 'main() {foo=1; return foo+foo();}'
 
 # multi-arity function with up to 6 args
-assert 4 'main() { foo = 1; bar = 2; return add(foo + bar, bar - foo); }'
-assert 2 'main() { foo = 1; bar = 2; return sub(foo + bar, bar - foo); }'
-assert 21 'main() { return add_6args(1, 2, 3, 4, 5, 6); }'
+assert 4 'main() {foo=1; bar=2; return add(foo+bar, bar-foo);}'
+assert 2 'main() {foo=1; bar=2; return sub(foo+bar, bar-foo);}'
+assert 21 'main() {return add_6args(1, 2, 3, 4, 5, 6);}'
 
 # zero-arity function declare
-assert 13 'main() { ret12 = 1; return ret12 + ret12(); } ret12() { return 12; }'
+assert 13 'main() {ret12=1; return ret12+ret12();} ret12() {return 12;}'
 
 # multi-arity function declare
-assert 10 'main() { return myadd(3, 7); } myadd(a, b) { return a + b; }'
-assert 4 'main() { return mysub(7, 3); } mysub(a, b) { return a - b; }'
-assert 55 'main() { return fib(9); } fib(x) { if (x <= 1) return 1; return fib(x - 1) + fib(x - 2); }'
+assert 10 'main() {return myadd(3, 7);} myadd(a, b) {return a+b;}'
+assert 4 'main() {return mysub(7, 3);} mysub(a, b) { return a-b;}'
+assert 55 'main() {return fib(9);} fib(x) {if (x<=1) return 1; return fib(x-1)+fib(x-2);}'
+
+assert 3 'main() {x=3; return *&x;}'
+assert 3 'main() {x=3; y=&x; z=&y; return **z;}'
+assert 5 'main() {x=3; y=5; return *(&x+8);}'
+assert 3 'main() {x=3; y=5; return *(&y-8);}'
+assert 5 'main() {x=3; y=&x; *y=5; return x;}'
+assert 7 'main() {x=3; y=5; *(&x+8)=7; return y;}'
+assert 7 'main() {x=3; y=5; *(&y-8)=7; return x;}'
 
 # all correct
 printf "\n\033[1;32m=== OK ===\033[0m\n"

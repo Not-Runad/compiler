@@ -47,6 +47,8 @@ typedef enum {
     ND_LT, // <
     ND_LE, // <=
     ND_ASSIGN, // =
+    ND_ADDR, // address &
+    ND_DEREF, // dereference *
     ND_VAR, // local variable
     ND_NUM, // integer
     ND_IF, // if
@@ -54,7 +56,7 @@ typedef enum {
     ND_FOR, // for
     ND_RETURN, // return
     ND_BLOCK, // block { ... }
-    ND_FUNCALL // call function
+    ND_FUNCALL, // call function
 } NodeType;
 
 typedef struct Node Node;

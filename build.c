@@ -11,6 +11,8 @@ char *arg_reg[] = {
 };
 Function *current_fn;
 
+void gen_code(Node *node);
+
 // allocate variables memory
 void allocate_memory(Function *fn) {
     int allocate_size = 0;
@@ -48,11 +50,16 @@ void store_var() {
 }
 
 void gen_addr(Node *node) {
-    if (node->type != ND_VAR)
-        error("not an left value");
-    
-    printf("    lea rax, [rbp-%d]\n", node->var->offset);
-    printf("    push rax\n");
+    switch (node->type) {
+    case ND_VAR:
+        printf("    lea rax, [rbp-%d]\n", node->var->offset);
+        printf("    push rax\n");
+        return;
+    case ND_DEREF:
+        gen_code(node->lhs);
+        return;
+    }
+    error("not an left value");
 }
 
 void gen_code(Node *node) {
@@ -68,6 +75,13 @@ void gen_code(Node *node) {
         gen_addr(node->lhs);
         gen_code(node->rhs);
         store_var();
+        return;
+    case ND_ADDR:
+        gen_addr(node->lhs);
+        return;
+    case ND_DEREF:
+        gen_code(node->lhs);
+        load_var();
         return;
     case ND_IF:
         if (node->els) {

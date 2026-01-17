@@ -285,12 +285,17 @@ Node *mul() {
     }
 }
 
-// unary = ("+" | "-")? primary
+// unary = ("+" | "-" | "&" | "*")? unary
+//       | primary
 Node *unary() {
     if (read_next_token("+"))
         return unary();
     if (read_next_token("-"))
-        return new_binary(ND_SUB, new_val_node(0), primary());
+        return new_binary(ND_SUB, new_val_node(0), unary());
+    if (read_next_token("&"))
+        return new_binary(ND_ADDR, unary(), NULL);
+    if (read_next_token("*"))
+        return new_binary(ND_DEREF, unary(), NULL);
     return primary();
 }
 
@@ -338,10 +343,6 @@ Node *primary() {
         Var *var = find_var(ident_token);
         if (!var) { // not exist
             char *ident = strndup(ident_token->str, ident_token->len);
-            var = new_var(ident);
-            // // whether var_list == NULL or not
-            // var->offset = var_list ? var_list->var->offset + 8 : 8;
-            // var_list = var;
             var = new_var(ident);
             return new_var_node(var);
         }
